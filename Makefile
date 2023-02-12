@@ -7,7 +7,7 @@ clean:
 	go mod vendor
 
 obs: clean
-	go run cmd/obs/main.go --task="New Cool Task"
+	go run cmd/obs/main.go --task="Use HTML templates"
 
 run: clean
 	source scripts/token.sh && go run main.go

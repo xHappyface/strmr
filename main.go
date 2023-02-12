@@ -34,7 +34,9 @@ func main() {
 	fmt.Println(twitch)
 	h := handlers.New(twitch)
 	http.HandleFunc("/twitch", h.TwitchHandler)
+	http.HandleFunc("/twitch/update", h.TwitchUpdateHandler)
 	http.HandleFunc("/twitch/auth", h.TwitchAuthHandler)
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 	//twitch.ChangeStreamTitle("jnrprgmr", "Making Bots in Golang")
 	// resp, err := twitchCli.EditChannelInformation(&helix.EditChannelInformationParams{

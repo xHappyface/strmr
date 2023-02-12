@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <title>
+            {{ .Title }}
+        </title>
+        {{ range .Javascript }}
+            <script src=static/js/{{ . }}.js></script> 
+        {{ end }}
+        {{ range .CSS }}
+            <link rel="stylesheet" href={{ . }}.css></script> 
+        {{ end }}
+    </head>
+    <body>
+        <h1>Settings: {{ if .Authorized }}<span style="color:green">Authorized</span>{{ else }}<span style="color:red">Not Authorized</span>{{ end }}</h1>
+        <br>
+        <a href={{ .AuthURL }}>Authenticate</a>
+        <br>
+        {{ if .Authorized }}
+            <input id="title-text" type="text"></input><button id="change-title">Change title</button>
+        {{ end }}
+    </body>
+<html>

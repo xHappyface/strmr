@@ -2,7 +2,6 @@ package twitch
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/nicklaw5/helix"
 )
@@ -36,7 +35,7 @@ func (t *Twitch) ChangeStreamTitle(username string, title string) error {
 	if !ok {
 		return errors.New("Could not find twith user: " + err.Error())
 	}
-	resp, err := t.Client.EditChannelInformation(&helix.EditChannelInformationParams{
+	_, err = t.Client.EditChannelInformation(&helix.EditChannelInformationParams{
 		BroadcasterID: broadcaster_id,
 		//GameID:              "456789",
 		//BroadcasterLanguage: "en",
@@ -46,7 +45,6 @@ func (t *Twitch) ChangeStreamTitle(username string, title string) error {
 	if err != nil {
 		return errors.New("Error changing twitch stream title: " + err.Error())
 	}
-	fmt.Printf("%+v\n", resp)
 	return nil
 }
 
