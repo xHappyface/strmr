@@ -14,6 +14,7 @@ func (h *Handlers) TwitchAuthHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the access token on the client
 	h.token = resp.Data.AccessToken
+	h.refreshToken = resp.Data.RefreshToken
 	h.twitch.Client.SetUserAccessToken(h.token)
 	http.Redirect(w, r, "http://localhost:8080/twitch", http.StatusSeeOther)
 }

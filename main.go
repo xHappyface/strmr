@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -31,7 +30,6 @@ func main() {
 		panic("error making twitch client: " + err.Error())
 	}
 	twitch := twitch.New(twitchCli)
-	fmt.Println(twitch)
 	h := handlers.New(twitch)
 	http.HandleFunc("/twitch", h.TwitchHandler)
 	http.HandleFunc("/twitch/update", h.TwitchUpdateHandler)

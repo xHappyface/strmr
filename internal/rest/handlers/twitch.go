@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"text/template"
 
@@ -20,8 +21,19 @@ func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 			State:        "some-statedasdad",
 			ForceVerify:  false,
 		})
-		if authorized {
-			h.twitch.ChangeStreamTitle("jnrprgmr", "Golang Bot")
+		if !authorized {
+			if h.refreshToken != "" {
+				resp, err := h.twitch.Client.RefreshUserAccessToken(h.refreshToken)
+				if err != nil {
+					fmt.Println("coult not refresh access token")
+				} else {
+					h.token = resp.Data.AccessToken
+					h.refreshToken = resp.Data.RefreshToken
+					h.twitch.Client.SetUserAccessToken(h.token)
+					userAccessToken := h.twitch.Client.GetUserAccessToken()
+					authorized, _, _ = h.twitch.Client.ValidateToken(userAccessToken)
+				}
+			}
 		}
 		tmpl := template.Must(template.ParseFiles("./templates/twitch.html"))
 		tmpl.Execute(w, struct {
