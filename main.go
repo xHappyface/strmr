@@ -1,15 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/andreykaipov/goobs"
 	"github.com/jnrprgmr/dog/internal/rest/handlers"
+	"github.com/jnrprgmr/dog/pkg/database"
 	"github.com/jnrprgmr/dog/pkg/obs"
 	"github.com/jnrprgmr/dog/pkg/twitch"
-	"github.com/nicklaw5/helix"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/nicklaw5/helix/v2"
 )
 
 func main() {
@@ -19,6 +22,12 @@ func main() {
 	}
 	defer obsCli.Disconnect()
 	obs := obs.New(obsCli)
+	sqlxConn, err := database.GetDB("dog")
+	if err != nil {
+		log.Fatal(err)
+	}
+	db := database.New(sqlxConn)
+	fmt.Println(db)
 	client_id := os.Getenv("CLIENT_ID")
 	client_secret := os.Getenv("CLIENT_SECRET")
 	twitchCli, err := helix.NewClient(&helix.Options{
@@ -30,10 +39,13 @@ func main() {
 		panic("error making twitch client: " + err.Error())
 	}
 	twitch := twitch.New(twitchCli)
-	h := handlers.New(twitch)
+	h := handlers.New(twitch, obs, db)
 	http.HandleFunc("/twitch", h.TwitchHandler)
 	http.HandleFunc("/twitch/update", h.TwitchUpdateHandler)
 	http.HandleFunc("/twitch/auth", h.TwitchAuthHandler)
+	http.HandleFunc("/twitch/search/categories", h.TwitchSearchCategoriesHandler)
+
+	http.HandleFunc("/obs", h.ObsHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 	//twitch.ChangeStreamTitle("jnrprgmr", "Making Bots in Golang")

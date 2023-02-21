@@ -16,7 +16,18 @@
         <a href={{ .AuthURL }}>Authenticate</a>
         <br>
         {{ if .Authorized }}
-            <input id="title-text" type="text"></input><button id="change-title">Change title</button>
+            {{ range $key, $value := .Users }}
+                <span>Authorized for {{ $key }}</span>
+                <br>
+            {{ end }}
+            <input id="title-text" type="text"/><button id="change-title">Change title</button>
+            <select id="choose-game">
+                {{ range $key, $value := .Games }}
+                    <option id="{{ $value }}">{{ $key }}</option>
+                {{ end }}
+            </select>
+            <br>
+            <input type="text" id="search-categories"/>
         {{ end }}
     </body>
 <html>

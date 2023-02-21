@@ -1,0 +1,16 @@
+<html>
+    <head>
+        <title>
+            {{ .Title }}
+        </title>
+        {{ range .Javascript }}
+            <script src=static/js/{{ . }}.js></script> 
+        {{ end }}
+        {{ range .CSS }}
+            <link rel="stylesheet" href={{ . }}.css></script> 
+        {{ end }}
+    </head>
+    <body>
+        OBS
+    </body>
+<html>

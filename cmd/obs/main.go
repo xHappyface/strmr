@@ -38,7 +38,28 @@ func (cli *OBSCli) Execute() {
 }
 
 func (cli *OBSCli) Run(cmd *cobra.Command, args []string) {
-	cli.obs.SetTask(cli.task)
+	t := obs.Task{
+		Text:   cli.task,
+		PosX:   33,
+		PosY:   811,
+		Width:  300,
+		Height: 90,
+		Color: obs.Color{
+			R: 255,
+			G: 0,
+			B: 20,
+			A: 255,
+		},
+		Background: &obs.Background{
+			Color: obs.Color{
+				R: 200,
+				G: 200,
+				B: 200,
+				A: 255,
+			},
+		},
+	}
+	cli.obs.SetTask(t)
 }
 
 func main() {

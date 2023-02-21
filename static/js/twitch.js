@@ -1,5 +1,4 @@
 $(() => {
-    console.log("loaded")
     $("#change-title").on("click", function() {
         var saveData = $.ajax({
             type: 'POST',
@@ -10,6 +9,17 @@ $(() => {
             contentType: "application/json; charset=utf-8",
             success: function(resultData) { alert("Save Complete") }
         });
-        console.log($("#title-text").val())
-    })
+    });
+    $("#search-categories").on("input", function(e) {
+        var query = $(this).val()
+        var saveData = $.ajax({
+            type: 'POST',
+            url: "/twitch/search/categories",
+            data: JSON.stringify({
+                query: query
+            }),
+            contentType: "application/json; charset=utf-8",
+            success: function(resultData) { console.log(resultData) }
+        });
+    });
 })

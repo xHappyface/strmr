@@ -11,3 +11,6 @@ obs: clean
 
 run: clean
 	source scripts/token.sh && go run main.go
+
+db:
+	sqlite3 dog.db < sql/schema.sql
