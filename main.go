@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -27,7 +26,6 @@ func main() {
 		log.Fatal(err)
 	}
 	db := database.New(sqlxConn)
-	fmt.Println(db)
 	client_id := os.Getenv("CLIENT_ID")
 	client_secret := os.Getenv("CLIENT_SECRET")
 	twitchCli, err := helix.NewClient(&helix.Options{
@@ -46,6 +44,7 @@ func main() {
 	http.HandleFunc("/twitch/search/categories", h.TwitchSearchCategoriesHandler)
 
 	http.HandleFunc("/obs", h.ObsHandler)
+	http.HandleFunc("/obs/task", h.UpdateOBSTask)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 	//twitch.ChangeStreamTitle("jnrprgmr", "Making Bots in Golang")
@@ -77,5 +76,5 @@ func main() {
 	// }
 
 	// fmt.Printf("%+v\n", user)
-	obs.SetTask("Change Twitch Title")
+	//obs.SetTask("Change Twitch Title")
 }

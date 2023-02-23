@@ -13,7 +13,7 @@ func (h *Handlers) ObsHandler(w http.ResponseWriter, r *http.Request) {
 			Javascript []string
 			CSS        []string
 		}{
-			Title: "Twitch stream settings",
+			Title: "OBS stream settings",
 			Javascript: []string{
 				"vendor/jquery/jquery-3.6.3.min",
 				"obs",
