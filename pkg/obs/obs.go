@@ -9,6 +9,7 @@ import (
 	"github.com/andreykaipov/goobs"
 	"github.com/andreykaipov/goobs/api/requests/inputs"
 	"github.com/andreykaipov/goobs/api/requests/sceneitems"
+	"github.com/andreykaipov/goobs/api/requests/scenes"
 	"github.com/andreykaipov/goobs/api/typedefs"
 )
 
@@ -144,65 +145,6 @@ func (obs *OBS) SetTask(task Task) error {
 	}
 
 	return nil
-	// _, err := obs.RemoveSceneItem(obs.GetSceneItemId("Main", input_name), "Main")
-	// if err != nil {
-	// 	fmt.Println("Error Removing scene item: " + err.Error())
-	// }
-	// if task.Background != nil {
-	// 	_, err = obs.RemoveSceneItem(obs.GetSceneItemId("Main", background_name), "Main")
-	// 	if err != nil {
-	// 		fmt.Println("Error Removing scene item: " + err.Error())
-	// 	}
-	// }
-	// if len(task.Text) > 0 {
-	// 	color, err := convertColor(task.Color)
-	// 	if err != nil {
-	// 		fmt.Println("Error converting color: " + err.Error())
-	// 	}
-	// 	if task.Background != nil {
-	// 		background_color, err := convertColor(task.Background.Color)
-	// 		if err != nil {
-	// 			fmt.Println("Error converting background color: " + err.Error())
-	// 		}
-	// 		_, err = obs.CreateInput("color_source_v3", "Main", "background", true, map[string]interface{}{ // color_source_v3
-	// 			"text":   task.Text,
-	// 			"color":  background_color,
-	// 			"width":  task.Width + 4,
-	// 			"height": task.Height + 4,
-	// 		})
-	// 		if err != nil {
-	// 			fmt.Println(err.Error())
-	// 		}
-	// 	}
-	// 	_, err = obs.CreateInput("text_ft2_source_v2", "Main", "test", true, map[string]interface{}{ // color_source_v3
-	// 		"text":   task.Text,
-	// 		"color1": color,
-	// 		"color2": color,
-	// 	})
-	// 	if err != nil {
-	// 		fmt.Println(err.Error())
-	// 	}
-	// 	if task.Background != nil {
-	// 		trans2, _ := obs.GetSceneItemTransform(obs.GetSceneItemId("Main", background_name), "Main")
-	// 		if err != nil {
-	// 			fmt.Println("Error getting scene item transform: " + err.Error())
-	// 		}
-	// 		_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", background_name), "Main", task.PosX-2, task.PosY-2, task.Width+4, task.Height+4, trans2.SceneItemTransform.SourceWidth, trans2.SceneItemTransform.SourceHeight)
-	// 		if err != nil {
-	// 			fmt.Println(err.Error())
-	// 		}
-	// 	}
-	// 	trans1, _ := obs.GetSceneItemTransform(obs.GetSceneItemId("Main", input_name), "Main")
-	// 	if err != nil {
-	// 		fmt.Println("Error getting scene item transform: " + err.Error())
-	// 	}
-	// 	_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", input_name), "Main", task.PosX, task.PosY, task.Width, task.Height, trans1.SceneItemTransform.SourceWidth, trans1.SceneItemTransform.SourceHeight)
-	// 	if err != nil {
-	// 		fmt.Println(err.Error())
-	// 	}
-	// 	return err
-	// }
-	// return nil
 }
 
 func (obs *OBS) GetInput(name string) (*inputs.GetInputSettingsResponse, error) {
@@ -296,4 +238,17 @@ func (obs *OBS) SetSceneItemIndex(item_id float64, item_index float64, name stri
 		SceneName:      name,
 		SceneItemIndex: item_index,
 	})
+}
+
+func (obs *OBS) CreateScene(name string) (*scenes.CreateSceneResponse, error) {
+	if len(name) == 0 {
+		return nil, errors.New("Scene name length must be greater than 0")
+	}
+	return obs.Client.Scenes.CreateScene(&scenes.CreateSceneParams{
+		SceneName: name,
+	})
+}
+
+func (obs *OBS) GetSceneList() (*scenes.GetSceneListResponse, error) {
+	return obs.Client.Scenes.GetSceneList()
 }

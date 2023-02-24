@@ -11,6 +11,12 @@
         {{ end }}
     </head>
     <body>
-        OBS
+        OBS<br>
+        <input type="text" id="create-scene-name" /><button id="create-scene-submit">Create Scene</button><br>
+        <select id="select-scene">
+            {{ range .Scenes }}
+                <option value="{{ .SceneName }}">{{ .SceneName }}</option>
+            {{ end }}
+        </select>
     </body>
 <html>
