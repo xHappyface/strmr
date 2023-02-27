@@ -2,16 +2,12 @@ module github.com/jnrprgmr/dog
 
 go 1.19
 
-replace (
-    github.com/nicklaw5/helix/v2 => /home/jnrprgmr/Projects/helix
-)
-
 require (
 	github.com/andreykaipov/goobs v0.12.0
-	github.com/nicklaw5/helix/v2 v2.16.0
-	github.com/spf13/cobra v1.6.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/mattn/go-sqlite3 v1.14.16
+	github.com/nicklaw5/helix/v2 v2.20.0
+	github.com/spf13/cobra v1.6.1
 )
 
 require (

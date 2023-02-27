@@ -13,16 +13,15 @@ func (h *Handlers) UpdateOBSTask(w http.ResponseWriter, r *http.Request) {
 		var data obs.Task
 		reqBody, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			h.ErrorResponse(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		json.Unmarshal(reqBody, &data)
-		status := http.StatusOK
 		err = h.obs.SetTask(data)
 		if err != nil {
-			status = http.StatusBadRequest
-
+			h.ErrorResponse(w, err.Error(), http.StatusBadRequest)
+			return
 		}
-		w.WriteHeader(status)
+		w.WriteHeader(http.StatusOK)
 	}
 }

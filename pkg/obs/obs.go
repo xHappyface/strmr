@@ -21,7 +21,7 @@ type Task struct {
 	Text       string      `json:"text"`
 	PosX       float64     `json:"pos_x"`
 	PosY       float64     `json:"pos_y"`
-	Width      float64     `json"width"`
+	Width      float64     `json:"width"`
 	Height     float64     `json:"height"`
 	Color      Color       `json:"color"`
 	Background *Background `json:"background,omitempty"`
@@ -66,15 +66,6 @@ func (obs *OBS) SetTask(task Task) error {
 	if err != nil {
 		task_exists = false
 	}
-	background_color, err := convertColor(task.Background.Color)
-	if err != nil {
-		return errors.New("Error converting background color: " + err.Error())
-	}
-	background_settings := map[string]interface{}{
-		"color":  background_color,
-		"width":  task.Width + 4,
-		"height": task.Height + 4,
-	}
 	color, err := convertColor(task.Color)
 	if err != nil {
 		return errors.New("Error converting color: " + err.Error())
@@ -84,40 +75,51 @@ func (obs *OBS) SetTask(task Task) error {
 		"color1": color,
 		"color2": color,
 	}
-	if background_exists {
-		if task.Background != nil {
-			_, err := obs.SetInputSettings(background_name, background_settings)
+
+	if task.Background != nil {
+		background_color, err := convertColor(task.Background.Color)
+		if err != nil {
+			return errors.New("Error converting background color: " + err.Error())
+		}
+		background_settings := map[string]interface{}{
+			"color":  background_color,
+			"width":  task.Width + 4,
+			"height": task.Height + 4,
+		}
+		if background_exists {
+			_, err = obs.SetInputSettings(background_name, background_settings)
 			if err != nil {
 				return errors.New(err.Error())
 			}
-			trans2, err := obs.GetSceneItemTransform(obs.GetSceneItemId("Main", background_name), "Main")
-			if err != nil {
-				return errors.New("Error getting scene item transform: " + err.Error())
-			}
-			_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", background_name), "Main", task.PosX-2, task.PosY-2, task.Width+4, task.Height+4, trans2.SceneItemTransform.SourceWidth, trans2.SceneItemTransform.SourceHeight)
+			_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", background_name), "Main", task.PosX-2, task.PosY-2, task.Width+4, task.Height+4)
 			if err != nil {
 				return errors.New(err.Error())
 			}
 		} else {
-			_, err = obs.RemoveSceneItem(obs.GetSceneItemId("Main", background_name), "Main")
-			if err != nil {
-				return errors.New("Error Removing scene item: " + err.Error())
-			}
-		}
-	} else {
-		if task.Background != nil {
 			_, err = obs.CreateInput("color_source_v3", "Main", background_name, true, background_settings)
 			if err != nil {
 				return errors.New(err.Error())
 			}
-			trans2, err := obs.GetSceneItemTransform(obs.GetSceneItemId("Main", background_name), "Main")
-			if err != nil {
-				return errors.New("Error getting scene item transform: " + err.Error())
+			task_id := obs.GetSceneItemId("Main", input_name)
+			if task_id > 0 {
+				resp, err := obs.GetSceneItemIndex(obs.GetSceneItemId("Main", background_name), "Main")
+				if err != nil {
+					return errors.New(err.Error())
+				}
+				_, err = obs.SetSceneItemIndex(task_id, resp.SceneItemIndex, "Main")
+				if err != nil {
+					return errors.New(err.Error())
+				}
 			}
-			_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", background_name), "Main", task.PosX-2, task.PosY-2, task.Width+4, task.Height+4, trans2.SceneItemTransform.SourceWidth, trans2.SceneItemTransform.SourceHeight)
+			_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", background_name), "Main", task.PosX-2, task.PosY-2, task.Width+4, task.Height+4)
 			if err != nil {
 				return errors.New(err.Error())
 			}
+		}
+	} else {
+		_, err = obs.RemoveSceneItem(obs.GetSceneItemId("Main", background_name), "Main")
+		if err != nil {
+			return errors.New("Error Removing scene item: " + err.Error())
 		}
 	}
 
@@ -134,11 +136,7 @@ func (obs *OBS) SetTask(task Task) error {
 				return errors.New(err.Error())
 			}
 		}
-		trans, err := obs.GetSceneItemTransform(obs.GetSceneItemId("Main", input_name), "Main")
-		if err != nil {
-			return errors.New("Error getting scene item transform: " + err.Error())
-		}
-		_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", input_name), "Main", task.PosX, task.PosY, task.Width, task.Height, trans.SceneItemTransform.SourceWidth, trans.SceneItemTransform.SourceHeight)
+		_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", input_name), "Main", task.PosX, task.PosY, task.Width, task.Height)
 		if err != nil {
 			return errors.New(err.Error())
 		}
@@ -208,19 +206,19 @@ func (obs *OBS) CreateSceneItem(name string) (*sceneitems.CreateSceneItemRespons
 	})
 }
 
-func (obs *OBS) SetSceneItemTransform(item_id float64, name string, posX, posY, width, height, sourceWidth, sourceHeight float64) (*sceneitems.SetSceneItemTransformResponse, error) {
+func (obs *OBS) SetSceneItemTransform(item_id float64, name string, posX, posY, width, height float64) (*sceneitems.SetSceneItemTransformResponse, error) {
 	return obs.Client.SceneItems.SetSceneItemTransform(&sceneitems.SetSceneItemTransformParams{
 		SceneItemId: item_id,
 		SceneName:   name,
 		SceneItemTransform: &typedefs.SceneItemTransform{
 			PositionX:    posX,
 			PositionY:    posY,
-			Alignment:    5,
-			BoundsWidth:  1,
-			BoundsHeight: 1,
-			ScaleX:       width / sourceWidth,
-			ScaleY:       height / sourceHeight,
-			BoundsType:   "OBS_BOUNDS_NONE",
+			Alignment:    5, // Top Left
+			BoundsWidth:  width,
+			BoundsHeight: height,
+			ScaleX:       1,
+			ScaleY:       1,
+			BoundsType:   "OBS_BOUNDS_MAX_ONLY",
 		},
 	})
 }
