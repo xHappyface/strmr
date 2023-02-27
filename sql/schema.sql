@@ -15,4 +15,10 @@ CREATE TABLE field_history (
     field_text   TEXT NOT NULL CHECK(TYPEOF(field_text) = 'text'),
     insert_time  INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER)),
     UNIQUE(user_id, field_type COLLATE NOCASE, field_text COLLATE NOCASE)
-)
+);
+
+CREATE TABLE task (
+    id           INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')           PRIMARY KEY AUTOINCREMENT,
+    task_text    TEXT NOT NULL CHECK(TYPEOF(task_text) = 'text'),
+    insert_time  INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER))
+);
