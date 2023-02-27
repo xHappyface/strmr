@@ -1,18 +1,22 @@
 $(() => {
-    console.log("loaded")
     $("#create-scene-submit").on("click", function() {
-        // var saveData = $.ajax({
-        //     type: 'POST',
-        //     url: "/twitch/update",
-        //     data: JSON.stringify({
-        //         title: $("#title-text").val()
-        //     }),
-        //     contentType: "application/json; charset=utf-8",
-        //     success: function(resultData) { alert("Save Complete") }
-        // });
-        var name = $("#create-scene-name").val()
-        if (name.length > 0) {
-            console.log("Save " + name)
-        }
+        $.ajax({
+            type: 'POST',
+            url: "/obs/scene/create",
+            data: JSON.stringify({
+                name: $("#create-scene-name").val()
+            }),
+            contentType: "application/json; charset=utf-8",
+            success: function(resultData) {
+                var $options = $("#select-scene-options")
+                $options.html("")
+                for(var i = 0; i < resultData.names.length; i++) {
+                    $option = $("<option>")
+                    $option.val(resultData.names[i])
+                    $option.text(resultData.names[i])
+                    $options.append($option)
+                }
+            }
+        });
     });
 });
