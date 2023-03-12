@@ -20,5 +20,32 @@
                 {{ end }}
             </select>
         </div>
+        <div>
+            <br>
+            <span>Set Task:</span>
+            <br>
+            <input type="text" value="{{ .Task.Text }}" id="task-text" \>
+            <br>
+            <label for="task-color">Text Color: </label>
+            <input type="color" id="task-color" name="task-color" value="#{{ .Task.Color }}"> 
+            <br>
+            <label for="task-width">Width:</label>
+            <input type="number" id="task-width" name="task-width" value="{{ .Task.Width }}" min="0" \>
+            <label for="task-height">Height:</label>
+            <input type="number" id="task-height" name="task-height" value="{{ .Task.Height }}" min="0" \>
+            <br>
+            <label for="task-posx">PosX:</label>
+            <input type="number" id="task-posx" name="task-posx" value="{{ .Task.PosX }}" min="0" \>
+            <label for="task-posy">PosY:</label>
+            <input type="number" id="task-posy" name="task-posy" value="{{ .Task.PosY }}" min="0" \>
+            <br>
+            <input type="checkbox" id="task-background-enabled" {{ if .Task.Background }} checked {{ end }} name="task-background-enabled">
+            <label for="task-background-enabled">Background</label>
+            <br>
+            <label {{ if not .Task.Background }} hidden {{ end }} id="background-color-label" for="background-color">Background Color: </label>
+            <input {{ if not .Task.Background }} hidden {{ end }} type="color" id="background-color" name="background-color" value="#{{ .Task.BackgroundColor }}">
+            <br>
+            <button id="task-submit">Submit Task</button>
+        </div>
     </body>
 <html>

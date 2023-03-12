@@ -53,16 +53,62 @@ func convertColor(c Color) (int64, error) {
 	return strconv.ParseInt(hexNumber, 16, 64)
 }
 
+func (obs *OBS) ConvertIntToHex(c int64) (*string, error) {
+	h := fmt.Sprintf("%x", c)
+	if len(h) != 8 {
+		return nil, errors.New("invalid color integer conversion")
+	}
+	return &h, nil
+}
+
+func (obs *OBS) ConvertIntToColor(c int64) (*Color, error) {
+	hex, err := obs.ConvertIntToHex(c)
+	if err != nil {
+		return nil, errors.New("cannot convert Color [a] value to uint")
+	}
+	h := *hex
+	aHex := h[0:2]
+	bHex := h[2:4]
+	gHex := h[4:6]
+	rHex := h[6:8]
+	aU8, err := strconv.ParseUint(aHex, 16, 64)
+	if err != nil {
+		return nil, errors.New("cannot convert Color [a] value to uint")
+	}
+	bU8, err := strconv.ParseUint(bHex, 16, 64)
+	if err != nil {
+		return nil, errors.New("cannot convert Color [b] value to uint")
+	}
+	gU8, err := strconv.ParseUint(gHex, 16, 64)
+	if err != nil {
+		return nil, errors.New("cannot convert Color [g] value to uint")
+	}
+	rU8, err := strconv.ParseUint(rHex, 16, 64)
+	if err != nil {
+		return nil, errors.New("cannot convert Color [r] value to uint")
+	}
+	a := uint8(aU8)
+	b := uint8(bU8)
+	g := uint8(gU8)
+	r := uint8(rU8)
+	return &Color{
+		A: a,
+		B: b,
+		G: g,
+		R: r,
+	}, nil
+}
+
 func (obs *OBS) SetTask(task Task) error {
 	background_name := "background"
 	input_name := "test"
 	background_exists := true
 	task_exists := true
-	_, err := obs.GetInput(background_name)
+	_, err := obs.GetInputSettings(background_name)
 	if err != nil {
 		background_exists = false
 	}
-	_, err = obs.GetInput(input_name)
+	_, err = obs.GetInputSettings(input_name)
 	if err != nil {
 		task_exists = false
 	}
@@ -117,9 +163,11 @@ func (obs *OBS) SetTask(task Task) error {
 			}
 		}
 	} else {
-		_, err = obs.RemoveSceneItem(obs.GetSceneItemId("Main", background_name), "Main")
-		if err != nil {
-			return errors.New("Error Removing scene item: " + err.Error())
+		if background_exists {
+			_, err = obs.RemoveSceneItem(obs.GetSceneItemId("Main", background_name), "Main")
+			if err != nil {
+				return errors.New("Error Removing background scene item: " + err.Error())
+			}
 		}
 	}
 
@@ -145,7 +193,7 @@ func (obs *OBS) SetTask(task Task) error {
 	return nil
 }
 
-func (obs *OBS) GetInput(name string) (*inputs.GetInputSettingsResponse, error) {
+func (obs *OBS) GetInputSettings(name string) (*inputs.GetInputSettingsResponse, error) {
 	return obs.Client.Inputs.GetInputSettings(&inputs.GetInputSettingsParams{
 		InputName: name,
 	})
