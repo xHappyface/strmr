@@ -32,6 +32,9 @@ $(() => {
         $("#background-color-label").toggle();
         $("#background-color").toggle();
     });
+    $("#record-enabled").on("change", function() {
+        $("#record-output").toggle();
+    });
     $("#task-submit").on("click", function() {
         var payload = {
             text: $("#task-text").val() || "",
@@ -52,4 +55,16 @@ $(() => {
             data: JSON.stringify(payload)
         });
     });
+    $("#update-stream").on("click", function() {
+        var recordOriginal = Boolean($("#stream-metadata").attr("data-recording")) || false
+        var recordEnabled = $("#record-enabled").is(":checked")
+        var payload = {
+            stream: $("#stream-enabled").is(":checked"),
+            record: recordEnabled
+        }
+        if( recordOriginal && !recordEnabled ) {
+            payload.output_file = $("#record-output-name").val() || "default.mp4"
+        }
+        console.log(payload)
+    })
 });

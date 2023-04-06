@@ -35,6 +35,16 @@ func (h *Handlers) ObsHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			background_exists = false
 		}
+		stream_status, err := h.obs.GetStreamStatus()
+		if err != nil {
+			h.ErrorResponse(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		record_status, err := h.obs.GetRecordStatus()
+		if err != nil {
+			h.ErrorResponse(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		task := Task{
 			Text:       "",
 			Color:      "000000",
@@ -84,11 +94,13 @@ func (h *Handlers) ObsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		tmpl := template.Must(template.ParseFiles("./templates/obs.html"))
 		tmpl.Execute(w, struct {
-			Title      string
-			Javascript []string
-			CSS        []string
-			Scenes     []*typedefs.Scene
-			Task       Task
+			Title        string
+			Javascript   []string
+			CSS          []string
+			Scenes       []*typedefs.Scene
+			Task         Task
+			StreamStatus bool
+			RecordStatus bool
 		}{
 			Title: "OBS stream settings",
 			Javascript: []string{
@@ -96,10 +108,12 @@ func (h *Handlers) ObsHandler(w http.ResponseWriter, r *http.Request) {
 				"obs",
 			},
 			CSS: []string{
-				"test",
+				"obs",
 			},
-			Scenes: scenes.Scenes,
-			Task:   task,
+			Scenes:       scenes.Scenes,
+			Task:         task,
+			StreamStatus: stream_status,
+			RecordStatus: record_status,
 		})
 	}
 }

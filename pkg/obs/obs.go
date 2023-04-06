@@ -298,3 +298,13 @@ func (obs *OBS) CreateScene(name string) (*scenes.CreateSceneResponse, error) {
 func (obs *OBS) GetSceneList() (*scenes.GetSceneListResponse, error) {
 	return obs.Client.Scenes.GetSceneList()
 }
+
+func (obs *OBS) GetStreamStatus() (bool, error) {
+	status, err := obs.Client.Stream.GetStreamStatus()
+	return status.OutputActive, err
+}
+
+func (obs *OBS) GetRecordStatus() (bool, error) {
+	status, err := obs.Client.Record.GetRecordStatus()
+	return status.OutputActive, err
+}
