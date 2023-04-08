@@ -29,6 +29,7 @@ func (database *Database) GetUserByID(id int64) (*User, error) {
 			fatal := "cannot rollback in GetUserByID: " + msg + ": " + roll_err.Error()
 			return nil, errors.New(fatal)
 		}
+		return nil, errors.New(msg)
 	}
 	err = tx.Commit()
 	if err != nil {
@@ -76,6 +77,7 @@ func (database *Database) GetUserByTypeAndID(user_type, user_id string) (*User, 
 			fatal := "cannot rollback in GetUserByTypeAndID: " + msg + ": " + roll_err.Error()
 			return nil, errors.New(fatal)
 		}
+		return nil, errors.New(msg)
 	}
 	err = tx.Commit()
 	if err != nil {
@@ -133,6 +135,7 @@ func (database *Database) InsertUser(user_type string, user_id string) error {
 				fatal := "cannot rollback from insert in InsertUser: " + msg + ": " + roll_err.Error()
 				return errors.New(fatal)
 			}
+			return errors.New(msg)
 		}
 	}
 	err = tx.Commit()

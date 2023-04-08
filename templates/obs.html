@@ -14,10 +14,10 @@
         OBS<br>
         <div id="stream-status">
             <span id="streaming-status" class="{{ if .StreamStatus }}green{{ else }}red{{ end }}">
-                {{ if not .StreamStatus }} Not {{ end }} Streaming
+                Streaming
             </span>
             <span id="recording-status" class="{{ if .RecordStatus }}green{{ else }}red{{ end }}">
-                {{ if not .RecordStatus }} Not {{ end }} Recording
+                Recording
             </span>
         </div>
         <div id="stream-options">
@@ -29,11 +29,6 @@
                 <input type="checkbox" id="record-enabled" {{ if .RecordStatus }} checked {{ end }} name="record-enabled">
                 <label for="record-enabled">Record</label>
             </span>
-        </div>
-        <div id="record-output" {{ if .RecordStatus }}hidden{{ end }}>
-            <span id="stream-metadata" data-streaming="{{ .StreamStatus }}" data-recording="{{ .RecordStatus }}"></span>
-            <label id="record-output-name-label" for="record-output-name">Recorded file output:</label>
-            <input type="text" name="record-output-name" id="record-output-name" />
         </div>
         <button id="update-stream">Submit</button>
         <br>

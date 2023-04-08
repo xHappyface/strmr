@@ -28,6 +28,7 @@ func (database *Database) GetTaskByID(id int64) (*Task, error) {
 			fatal := "cannot rollback in GetTaskByID: " + msg + ": " + roll_err.Error()
 			return nil, errors.New(fatal)
 		}
+		return nil, errors.New(msg)
 	}
 	err = tx.Commit()
 	if err != nil {
@@ -75,6 +76,7 @@ func (database *Database) InsertTask(task_text string) error {
 			fatal := "cannot rollback from insert in InsertTask: " + msg + ": " + roll_err.Error()
 			return errors.New(fatal)
 		}
+		return errors.New(msg)
 	}
 	err = tx.Commit()
 	if err != nil {

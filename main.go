@@ -46,6 +46,7 @@ func main() {
 	http.HandleFunc("/obs", h.ObsHandler)
 	http.HandleFunc("/obs/task", h.UpdateOBSTask)
 	http.HandleFunc("/obs/scene/create", h.CreateScene)
+	http.HandleFunc("/obs/stream", h.UpdateOBSStream)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 	//twitch.ChangeStreamTitle("jnrprgmr", "Making Bots in Golang")

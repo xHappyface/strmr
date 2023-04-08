@@ -32,9 +32,6 @@ $(() => {
         $("#background-color-label").toggle();
         $("#background-color").toggle();
     });
-    $("#record-enabled").on("change", function() {
-        $("#record-output").toggle();
-    });
     $("#task-submit").on("click", function() {
         var payload = {
             text: $("#task-text").val() || "",
@@ -56,15 +53,32 @@ $(() => {
         });
     });
     $("#update-stream").on("click", function() {
-        var recordOriginal = Boolean($("#stream-metadata").attr("data-recording")) || false
+        var streamEnabled = $("#stream-enabled").is(":checked")
         var recordEnabled = $("#record-enabled").is(":checked")
         var payload = {
-            stream: $("#stream-enabled").is(":checked"),
+            stream: streamEnabled,
             record: recordEnabled
         }
-        if( recordOriginal && !recordEnabled ) {
-            payload.output_file = $("#record-output-name").val() || "default.mp4"
-        }
-        console.log(payload)
+        $.ajax({
+            type: 'POST',
+            url: "/obs/stream",
+            data: JSON.stringify(payload),
+            success: function() {
+                if (!streamEnabled) {
+                    $("#streaming-status").removeClass("green");
+                    $("#streaming-status").addClass("red")
+                } else {
+                    $("#streaming-status").removeClass("red");
+                    $("#streaming-status").addClass("green")
+                }
+                if (!recordEnabled) {
+                    $("#recording-status").removeClass("green");
+                    $("#recording-status").addClass("red")
+                } else {
+                    $("#recording-status").removeClass("red");
+                    $("#recording-status").addClass("green")
+                }
+            }
+        });
     })
 });

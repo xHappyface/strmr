@@ -304,7 +304,17 @@ func (obs *OBS) GetStreamStatus() (bool, error) {
 	return status.OutputActive, err
 }
 
+func (obs *OBS) ToggleStream() (bool, error) {
+	status, err := obs.Client.Stream.ToggleStream()
+	return status.OutputActive, err
+}
+
 func (obs *OBS) GetRecordStatus() (bool, error) {
 	status, err := obs.Client.Record.GetRecordStatus()
 	return status.OutputActive, err
+}
+
+func (obs *OBS) ToggleRecord() error {
+	_, err := obs.Client.Record.ToggleRecord()
+	return err
 }
