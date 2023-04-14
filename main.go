@@ -20,7 +20,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer obsCli.Disconnect()
-	obs := obs.New(obsCli)
+	obs := obs.New(obsCli, "test", "background")
 	sqlxConn, err := database.GetDB("dog")
 	if err != nil {
 		log.Fatal(err)

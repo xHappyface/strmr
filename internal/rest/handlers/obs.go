@@ -25,12 +25,12 @@ func (h *Handlers) ObsHandler(w http.ResponseWriter, r *http.Request) {
 			h.ErrorResponse(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		input_settings, err := h.obs.GetInputSettings("test")
+		input_settings, err := h.obs.GetInputSettings(h.obs.TaskSourceName)
 		input_exists := true
 		if err != nil {
 			input_exists = false
 		}
-		background_settings, err := h.obs.GetInputSettings("background")
+		background_settings, err := h.obs.GetInputSettings(h.obs.BackgroundSourceName)
 		background_exists := true
 		if err != nil {
 			background_exists = false
@@ -55,7 +55,12 @@ func (h *Handlers) ObsHandler(w http.ResponseWriter, r *http.Request) {
 			Background: background_exists,
 		}
 		if input_exists {
-			transform, err := h.obs.GetSceneItemTransform(h.obs.GetSceneItemId("Main", "test"), "Main")
+			current_scene, err := h.obs.GetCurrentScene()
+			if err != nil {
+				h.ErrorResponse(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			transform, err := h.obs.GetSceneItemTransform(h.obs.GetSceneItemId(current_scene, h.obs.TaskSourceName), current_scene)
 			if err != nil {
 				h.ErrorResponse(w, err.Error(), http.StatusBadRequest)
 				return

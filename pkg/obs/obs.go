@@ -14,7 +14,9 @@ import (
 )
 
 type OBS struct {
-	Client *goobs.Client
+	Client               *goobs.Client
+	TaskSourceName       string
+	BackgroundSourceName string
 }
 
 type Task struct {
@@ -38,9 +40,16 @@ type Background struct {
 	Color Color `json:"color"`
 }
 
-func New(client *goobs.Client) *OBS {
+const (
+	SourceTextType       string = "text_ft2_source_v2"
+	SourceColorBlockType string = "color_source_v3"
+)
+
+func New(client *goobs.Client, task_name, background_name string) *OBS {
 	return &OBS{
-		Client: client,
+		Client:               client,
+		TaskSourceName:       task_name,
+		BackgroundSourceName: background_name,
 	}
 }
 
@@ -100,15 +109,13 @@ func (obs *OBS) ConvertIntToColor(c int64) (*Color, error) {
 }
 
 func (obs *OBS) SetTask(task Task) error {
-	background_name := "background"
-	input_name := "test"
 	background_exists := true
 	task_exists := true
-	_, err := obs.GetInputSettings(background_name)
+	_, err := obs.GetInputSettings(obs.BackgroundSourceName)
 	if err != nil {
 		background_exists = false
 	}
-	_, err = obs.GetInputSettings(input_name)
+	_, err = obs.GetInputSettings(obs.TaskSourceName)
 	if err != nil {
 		task_exists = false
 	}
@@ -121,7 +128,10 @@ func (obs *OBS) SetTask(task Task) error {
 		"color1": color,
 		"color2": color,
 	}
-
+	current_scene, err := obs.GetCurrentScene()
+	if err != nil {
+		return errors.New("Cannot get current scene in SetTask: " + err.Error())
+	}
 	if task.Background != nil {
 		background_color, err := convertColor(task.Background.Color)
 		if err != nil {
@@ -133,38 +143,38 @@ func (obs *OBS) SetTask(task Task) error {
 			"height": task.Height + 4,
 		}
 		if background_exists {
-			_, err = obs.SetInputSettings(background_name, background_settings)
+			_, err = obs.SetInputSettings(obs.BackgroundSourceName, background_settings)
 			if err != nil {
-				return errors.New(err.Error())
+				return errors.New("Cannot set background settings in SetTask: " + err.Error())
 			}
-			_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", background_name), "Main", task.PosX-2, task.PosY-2, task.Width+4, task.Height+4)
+			_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.BackgroundSourceName), current_scene, task.PosX-2, task.PosY-2, task.Width+4, task.Height+4)
 			if err != nil {
 				return errors.New(err.Error())
 			}
 		} else {
-			_, err = obs.CreateInput("color_source_v3", "Main", background_name, true, background_settings)
+			_, err = obs.CreateInput(SourceColorBlockType, current_scene, obs.BackgroundSourceName, true, background_settings)
 			if err != nil {
 				return errors.New(err.Error())
 			}
-			task_id := obs.GetSceneItemId("Main", input_name)
+			task_id := obs.GetSceneItemId(current_scene, obs.TaskSourceName)
 			if task_id > 0 {
-				resp, err := obs.GetSceneItemIndex(obs.GetSceneItemId("Main", background_name), "Main")
+				resp, err := obs.GetSceneItemIndex(obs.GetSceneItemId(current_scene, obs.BackgroundSourceName), current_scene)
 				if err != nil {
 					return errors.New(err.Error())
 				}
-				_, err = obs.SetSceneItemIndex(task_id, resp.SceneItemIndex, "Main")
+				_, err = obs.SetSceneItemIndex(task_id, resp.SceneItemIndex, current_scene)
 				if err != nil {
 					return errors.New(err.Error())
 				}
 			}
-			_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", background_name), "Main", task.PosX-2, task.PosY-2, task.Width+4, task.Height+4)
+			_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.BackgroundSourceName), current_scene, task.PosX-2, task.PosY-2, task.Width+4, task.Height+4)
 			if err != nil {
 				return errors.New(err.Error())
 			}
 		}
 	} else {
 		if background_exists {
-			_, err = obs.RemoveSceneItem(obs.GetSceneItemId("Main", background_name), "Main")
+			_, err = obs.RemoveSceneItem(obs.GetSceneItemId(current_scene, obs.BackgroundSourceName), current_scene)
 			if err != nil {
 				return errors.New("Error Removing background scene item: " + err.Error())
 			}
@@ -173,18 +183,18 @@ func (obs *OBS) SetTask(task Task) error {
 
 	if len(task.Text) > 0 {
 		if task_exists {
-			_, err := obs.SetInputSettings(input_name, task_settings)
+			_, err := obs.SetInputSettings(obs.TaskSourceName, task_settings)
 			if err != nil {
 				return errors.New(err.Error())
 			}
 
 		} else {
-			_, err = obs.CreateInput("text_ft2_source_v2", "Main", input_name, true, task_settings)
+			_, err = obs.CreateInput(SourceTextType, current_scene, obs.TaskSourceName, true, task_settings)
 			if err != nil {
 				return errors.New(err.Error())
 			}
 		}
-		_, err = obs.SetSceneItemTransform(obs.GetSceneItemId("Main", input_name), "Main", task.PosX, task.PosY, task.Width, task.Height)
+		_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.TaskSourceName), current_scene, task.PosX, task.PosY, task.Width, task.Height)
 		if err != nil {
 			return errors.New(err.Error())
 		}
@@ -317,4 +327,15 @@ func (obs *OBS) GetRecordStatus() (bool, error) {
 func (obs *OBS) ToggleRecord() error {
 	_, err := obs.Client.Record.ToggleRecord()
 	return err
+}
+
+func (obs *OBS) GetCurrentScene() (string, error) {
+	resp, err := obs.Client.Scenes.GetCurrentProgramScene()
+	if err != nil {
+		return "", err
+	}
+	if resp.CurrentProgramSceneName == "" {
+		return "", errors.New("no current scene detected")
+	}
+	return resp.CurrentProgramSceneName, nil
 }
