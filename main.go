@@ -6,10 +6,10 @@ import (
 	"os"
 
 	"github.com/andreykaipov/goobs"
-	"github.com/jnrprgmr/dog/internal/rest/handlers"
-	"github.com/jnrprgmr/dog/pkg/database"
-	"github.com/jnrprgmr/dog/pkg/obs"
-	"github.com/jnrprgmr/dog/pkg/twitch"
+	"github.com/jnrprgmr/strmr/internal/rest/handlers"
+	"github.com/jnrprgmr/strmr/pkg/database"
+	"github.com/jnrprgmr/strmr/pkg/obs"
+	"github.com/jnrprgmr/strmr/pkg/twitch"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nicklaw5/helix/v2"
 )
@@ -21,7 +21,7 @@ func main() {
 	}
 	defer obsCli.Disconnect()
 	obs := obs.New(obsCli, "test", "background")
-	sqlxConn, err := database.GetDB("dog")
+	sqlxConn, err := database.GetDB("strmr")
 	if err != nil {
 		log.Fatal(err)
 	}

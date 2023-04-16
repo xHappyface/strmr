@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/jnrprgmr/dog/pkg/obs"
+	"github.com/jnrprgmr/strmr/pkg/obs"
 )
 
 func (h *Handlers) UpdateOBSTask(w http.ResponseWriter, r *http.Request) {

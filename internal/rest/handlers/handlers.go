@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/jnrprgmr/dog/pkg/database"
-	"github.com/jnrprgmr/dog/pkg/obs"
-	"github.com/jnrprgmr/dog/pkg/twitch"
+	"github.com/jnrprgmr/strmr/pkg/database"
+	"github.com/jnrprgmr/strmr/pkg/obs"
+	"github.com/jnrprgmr/strmr/pkg/twitch"
 )
 
 type Handlers struct {

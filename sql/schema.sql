@@ -53,7 +53,9 @@ CREATE TABLE stream_task (
 
 CREATE TABLE media_recording (
     id           INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')           PRIMARY KEY AUTOINCREMENT,
+    file_name    TEXT NOT NULL CHECK(TYPEOF(file_name) = 'text'),
+    directory    TEXT NOT NULL CHECK(TYPEOF(directory) = 'text'),
     start_time   INTEGER NOT NULL CHECK(TYPEOF(start_time) = 'integer')   DEFAULT(CAST(strftime('%s', 'now') AS INTEGER)),
-    end_time     INTEGER NOT NULL CHECK(TYPEOF(end_time) = 'integer')     DEFAULT(CAST(strftime('%s', 'now') AS INTEGER)),
+    end_time     INTEGER,
     insert_time  INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER))
 );

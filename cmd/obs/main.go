@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/andreykaipov/goobs"
-	"github.com/jnrprgmr/dog/pkg/obs"
+	"github.com/jnrprgmr/strmr/pkg/obs"
 	"github.com/spf13/cobra"
 )
 

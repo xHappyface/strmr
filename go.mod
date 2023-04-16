@@ -1,4 +1,4 @@
-module github.com/jnrprgmr/dog
+module github.com/jnrprgmr/strmr
 
 go 1.19
 

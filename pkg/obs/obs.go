@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/andreykaipov/goobs"
+	"github.com/andreykaipov/goobs/api/requests/config"
 	"github.com/andreykaipov/goobs/api/requests/inputs"
 	"github.com/andreykaipov/goobs/api/requests/sceneitems"
 	"github.com/andreykaipov/goobs/api/requests/scenes"
@@ -41,8 +42,9 @@ type Background struct {
 }
 
 const (
-	SourceTextType       string = "text_ft2_source_v2"
-	SourceColorBlockType string = "color_source_v3"
+	SourceTextType                 string = "text_ft2_source_v2"
+	SourceColorBlockType           string = "color_source_v3"
+	ProfileParameterOutputFileName string = "FilenameFormatting"
 )
 
 func New(client *goobs.Client, task_name, background_name string) *OBS {
@@ -338,4 +340,41 @@ func (obs *OBS) GetCurrentScene() (string, error) {
 		return "", errors.New("no current scene detected")
 	}
 	return resp.CurrentProgramSceneName, nil
+}
+
+func (obs *OBS) GetRecordDirectory() (string, error) {
+	resp, err := obs.Client.Config.GetRecordDirectory()
+	if err != nil {
+		return "", errors.New("Cannot get current recording directory: " + err.Error())
+	}
+	if resp.RecordDirectory == "" {
+		return "", errors.New("Recording directory was empty")
+	}
+	return resp.RecordDirectory, nil
+}
+
+func (obs *OBS) GetProfileParameter(parameter string) (string, error) {
+	resp, err := obs.Client.Config.GetProfileParameter(&config.GetProfileParameterParams{
+		ParameterCategory: "Output",
+		ParameterName:     parameter,
+	})
+	if err != nil {
+		return "", errors.New("Could not get profile parameter [" + parameter + "]: " + err.Error())
+	}
+	if resp.ParameterValue == "" {
+		return "", errors.New("profile parameter [" + parameter + "] was empty")
+	}
+	return resp.ParameterValue, nil
+}
+
+func (obs *OBS) SetProfileParameter(parameter string, value string) error {
+	_, err := obs.Client.Config.SetProfileParameter(&config.SetProfileParameterParams{
+		ParameterCategory: "Output",
+		ParameterName:     parameter,
+		ParameterValue:    value,
+	})
+	if err != nil {
+		return errors.New("Could not set profile parameter [" + parameter + "]: " + err.Error())
+	}
+	return nil
 }
