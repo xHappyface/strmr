@@ -8,6 +8,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/nicklaw5/helix/v2 v2.20.0
 	github.com/spf13/cobra v1.6.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

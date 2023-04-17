@@ -1,6 +1,9 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -12,16 +15,42 @@ import (
 	"github.com/jnrprgmr/strmr/pkg/twitch"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nicklaw5/helix/v2"
+
+	"gopkg.in/yaml.v3"
 )
 
+type Config struct {
+	Database database.Config `yaml:"db"`
+	OBS      obs.Config      `yaml:"obs"`
+}
+
+func loadConfig() (*Config, error) {
+	c := Config{}
+	yamlFile, err := ioutil.ReadFile("conf/local.yaml")
+	if err != nil {
+		return nil, errors.New("Failed to read config file: " + err.Error())
+	}
+	err = yaml.Unmarshal(yamlFile, &c)
+	if err != nil {
+		return nil, errors.New("Failed to unmarshal config file: " + err.Error())
+	}
+	return &c, nil
+}
+
 func main() {
-	obsCli, err := goobs.New("localhost:4455", goobs.WithPassword("test123"))
+	c, err := loadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(c)
+	obs_password := os.Getenv("OBS_PASSWORD")
+	obsCli, err := goobs.New(c.OBS.Host+":"+c.OBS.Port, goobs.WithPassword(obs_password))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer obsCli.Disconnect()
 	obs := obs.New(obsCli, "test", "background")
-	sqlxConn, err := database.GetDB("strmr")
+	sqlxConn, err := database.GetDB(c.Database.Name)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,36 +76,8 @@ func main() {
 	http.HandleFunc("/obs/task", h.UpdateOBSTask)
 	http.HandleFunc("/obs/scene/create", h.CreateScene)
 	http.HandleFunc("/obs/stream", h.UpdateOBSStream)
+
+	http.HandleFunc("/youtube", h.YouTubeHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	log.Fatal(http.ListenAndServe(":8080", nil))
-	//twitch.ChangeStreamTitle("jnrprgmr", "Making Bots in Golang")
-	// resp, err := twitchCli.EditChannelInformation(&helix.EditChannelInformationParams{
-	// 	BroadcasterID:       "123456",
-	// 	GameID:              "456789",
-	// 	BroadcasterLanguage: "en",
-	// 	Title:               "Your stream title",
-	// 	Delay:               0,
-	// })
-	// if err != nil {
-	// 	// handle error
-	// }
-
-	// game, err := twitchCli.GetGames(&helix.GamesParams{
-	// 	Names: []string{"Dota 2", "Software And Game Development"},
-	// })
-	// if err != nil {
-	// 	panic("another one")
-	// }
-
-	// fmt.Printf("%+v\n", game)
-
-	// user, err := twitchCli.GetUsers(&helix.UsersParams{
-	// 	Logins: []string{"jnrprgmr"},
-	// })
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// fmt.Printf("%+v\n", user)
-	//obs.SetTask("Change Twitch Title")
 }

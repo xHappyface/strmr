@@ -14,6 +14,12 @@ import (
 	"github.com/andreykaipov/goobs/api/typedefs"
 )
 
+type Config struct {
+	Host         string `yaml:"host"`
+	Port         string `yaml:"port"`
+	RecordingDir string `yaml:"recording_dir"`
+}
+
 type OBS struct {
 	Client               *goobs.Client
 	TaskSourceName       string

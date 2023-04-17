@@ -7,6 +7,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type Config struct {
+	Name string `yaml:"name"`
+}
+
 type Database struct {
 	db *sqlx.DB
 }
