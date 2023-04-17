@@ -10,6 +10,23 @@ import (
 
 func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
+		access_token, err := h.database.GetLatestMetadataByKey("access_token")
+		if err != nil {
+			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if access_token != nil {
+			h.twitch.Token = access_token.MetadataValue
+			h.twitch.Client.SetUserAccessToken(h.twitch.Token)
+		}
+		refresh_token, err := h.database.GetLatestMetadataByKey("refresh_token")
+		if err != nil {
+			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if refresh_token != nil {
+			h.twitch.RefreshToken = refresh_token.MetadataValue
+		}
 		userAccessToken := h.twitch.Client.GetUserAccessToken()
 		authorized, _, err := h.twitch.Client.ValidateToken(userAccessToken)
 		if err != nil {
@@ -18,7 +35,7 @@ func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 		url := h.twitch.Client.GetAuthorizationURL(&helix.AuthorizationURLParams{
 			ResponseType: "code",
 			Scopes:       []string{"channel:manage:broadcast"},
-			State:        "some-statedasdad",
+			State:        "some-statedasd",
 			ForceVerify:  false,
 		})
 		if !authorized {
@@ -29,6 +46,16 @@ func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 				} else {
 					h.twitch.Token = resp.Data.AccessToken
 					h.twitch.RefreshToken = resp.Data.RefreshToken
+					err = h.database.InsertMetadata("refresh_token", h.twitch.RefreshToken)
+					if err != nil {
+						h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					err = h.database.InsertMetadata("access_token", h.twitch.Token)
+					if err != nil {
+						h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
 					h.twitch.Client.SetUserAccessToken(h.twitch.Token)
 					userAccessToken := h.twitch.Client.GetUserAccessToken()
 					authorized, _, _ = h.twitch.Client.ValidateToken(userAccessToken)
@@ -38,12 +65,6 @@ func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 		users, err := h.twitch.GetUsers([]string{})
 		if err != nil {
 			users = map[string]string{}
-		}
-		if id, ok := users["jnrprgmr"]; ok {
-			err = h.database.InsertUser("twitch", id)
-			if err != nil {
-				fmt.Println("couldnt insert user in db from handler")
-			}
 		}
 		games, err := h.twitch.GetGames([]string{"Dota 2", "Software and Game Development", "pokemon"})
 		if err != nil {
