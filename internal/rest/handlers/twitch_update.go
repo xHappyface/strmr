@@ -24,6 +24,11 @@ func (h *Handlers) TwitchUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+		err = h.database.InsertStreamMetadata("title", data.Title)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 	}
 }

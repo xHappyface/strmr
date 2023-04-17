@@ -30,25 +30,11 @@ CREATE TABLE stream (
     insert_time  INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER))
 );
 
-CREATE TABLE stream_title (
-    id           INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')         PRIMARY KEY AUTOINCREMENT,
-    stream_id    INTEGER NOT NULL CHECK(TYPEOF(stream_id) = 'integer')  REFERENCES stream(id),
-    title        TEXT NOT NULL CHECK(TYPEOF(title) = 'text'),
-    insert_time  INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER))
-);
-
-CREATE TABLE stream_category (
-    id           INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')         PRIMARY KEY AUTOINCREMENT,
-    stream_id    INTEGER NOT NULL CHECK(TYPEOF(stream_id) = 'integer')  REFERENCES stream(id),
-    category     TEXT NOT NULL CHECK(TYPEOF(category) = 'text'),
-    insert_time  INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER))
-);
-
-CREATE TABLE stream_task (
-    id           INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')           PRIMARY KEY AUTOINCREMENT,
-    stream_id    INTEGER NOT NULL CHECK(TYPEOF(stream_id) = 'integer')  REFERENCES stream(id),
-    task         TEXT NOT NULL CHECK(TYPEOF(task) = 'text'),
-    insert_time  INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER))
+CREATE TABLE stream_metadata (
+    id              INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')         PRIMARY KEY AUTOINCREMENT,
+    metadata_key    TEXT NOT NULL CHECK(TYPEOF(metadata_key) = 'text'),
+    metadata_value  TEXT NOT NULL CHECK(TYPEOF(metadata_value) = 'text'),
+    insert_time     INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER))
 );
 
 CREATE TABLE media_recording (

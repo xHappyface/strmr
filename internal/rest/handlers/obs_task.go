@@ -17,7 +17,7 @@ func (h *Handlers) UpdateOBSTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		json.Unmarshal(reqBody, &data)
-		err = h.database.InsertTask(data.Text)
+		err = h.database.InsertStreamMetadata("task", data.Text)
 		if err != nil {
 			h.ErrorResponse(w, err.Error(), http.StatusBadRequest)
 			return
