@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -15,6 +16,7 @@ import (
 	"github.com/jnrprgmr/strmr/pkg/twitch"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nicklaw5/helix/v2"
+	youtube "google.golang.org/api/youtube/v3"
 
 	"gopkg.in/yaml.v3"
 )
@@ -65,6 +67,21 @@ func main() {
 	if err != nil {
 		panic("error making twitch client: " + err.Error())
 	}
+	yts, err := youtube.NewService(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	call := yts.Channels.List([]string{"snippet", "contentDetails", "statistics"})
+	call = call.ForUsername("GoogleDevelopers")
+	response, err := call.Do()
+	if err != nil {
+		log.Fatalf("Error making API call: %v", err.Error())
+	}
+	fmt.Println(fmt.Sprintf("This channel's ID is %s. Its title is '%s', "+
+		"and it has %d views.",
+		response.Items[0].Id,
+		response.Items[0].Snippet.Title,
+		response.Items[0].Statistics.ViewCount))
 	twitch := twitch.New(twitchCli)
 	h := handlers.New(twitch, obs, db)
 	http.HandleFunc("/twitch", h.TwitchHandler)
