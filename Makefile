@@ -14,3 +14,6 @@ run: clean
 
 db:
 	sqlite3 strmr.db < sql/schema.sql
+
+auth-youtube:
+	source scripts/token.sh && python3 auth.py

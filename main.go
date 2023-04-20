@@ -67,21 +67,45 @@ func main() {
 	if err != nil {
 		panic("error making twitch client: " + err.Error())
 	}
+	//Setup youtube service account: https://tales.mbivert.com/on-youtube-api-golang/
 	yts, err := youtube.NewService(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
-	call := yts.Channels.List([]string{"snippet", "contentDetails", "statistics"})
-	call = call.ForUsername("GoogleDevelopers")
-	response, err := call.Do()
-	if err != nil {
-		log.Fatalf("Error making API call: %v", err.Error())
+	upload := &youtube.Video{
+		Snippet: &youtube.VideoSnippet{
+			Title:       "Test Vid",
+			Description: "0:00 Intro\n0:10 End\nRecorded: Now()",
+			CategoryId:  "22",
+			Tags: []string{
+				"test",
+				"vid",
+			},
+		},
+		Status: &youtube.VideoStatus{PrivacyStatus: "unlisted"},
 	}
-	fmt.Println(fmt.Sprintf("This channel's ID is %s. Its title is '%s', "+
-		"and it has %d views.",
-		response.Items[0].Id,
-		response.Items[0].Snippet.Title,
-		response.Items[0].Statistics.ViewCount))
+	call := yts.Videos.Insert([]string{"snippet", "status"}, upload)
+	file, err := os.Open("/media/jnrprgmr/7C000E4D000E0EB8/Videos/test_vid.mp4")
+	defer file.Close()
+	if err != nil {
+		log.Fatalf("Error opening %v: %v", "/media/jnrprgmr/7C000E4D000E0EB8/Videos/test_vid.mp4", err)
+	}
+	response, err := call.Media(file).Do()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Upload successful! Video ID: %v\n", response.Id)
+	// call := yts.Channels.List([]string{"snippet", "contentDetails", "statistics"})
+	// call = call.ForUsername("GoogleDevelopers")
+	// response, err := call.Do()
+	// if err != nil {
+	// 	log.Fatalf("Error making API call: %v", err.Error())
+	// }
+	// fmt.Println(fmt.Sprintf("This channel's ID is %s. Its title is '%s', "+
+	// 	"and it has %d views.",
+	// 	response.Items[0].Id,
+	// 	response.Items[0].Snippet.Title,
+	// 	response.Items[0].Statistics.ViewCount))
 	twitch := twitch.New(twitchCli)
 	h := handlers.New(twitch, obs, db)
 	http.HandleFunc("/twitch", h.TwitchHandler)
