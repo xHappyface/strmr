@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,9 +14,12 @@ import (
 	"github.com/jnrprgmr/strmr/pkg/database"
 	"github.com/jnrprgmr/strmr/pkg/obs"
 	"github.com/jnrprgmr/strmr/pkg/twitch"
+	"github.com/jnrprgmr/strmr/pkg/youtube"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nicklaw5/helix/v2"
-	youtube "google.golang.org/api/youtube/v3"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	youtubeApi "google.golang.org/api/youtube/v3"
 
 	"gopkg.in/yaml.v3"
 )
@@ -39,12 +42,22 @@ func loadConfig() (*Config, error) {
 	return &c, nil
 }
 
+func tokenFromFile(file string) (*oauth2.Token, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, errors.New("could not open OAUTH file, please run the scripts/auth.py to get the authorization json: " + err.Error())
+	}
+	t := &oauth2.Token{}
+	err = json.NewDecoder(f).Decode(t)
+	defer f.Close()
+	return t, err
+}
+
 func main() {
 	c, err := loadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(c)
 	obs_password := os.Getenv("OBS_PASSWORD")
 	obsCli, err := goobs.New(c.OBS.Host+":"+c.OBS.Port, goobs.WithPassword(obs_password))
 	if err != nil {
@@ -67,45 +80,37 @@ func main() {
 	if err != nil {
 		panic("error making twitch client: " + err.Error())
 	}
-	//Setup youtube service account: https://tales.mbivert.com/on-youtube-api-golang/
-	yts, err := youtube.NewService(context.Background())
+	ctx := context.Background()
+	// Used this video to help setup google coud project and get client secrets https://www.youtube.com/watch?v=aFwZgth790Q
+	// run auth.py to generate oauth token and allow youtube API
+	b, err := ioutil.ReadFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Unable to read client secret file: %v", err)
 	}
-	upload := &youtube.Video{
-		Snippet: &youtube.VideoSnippet{
-			Title:       "Test Vid",
-			Description: "0:00 Intro\n0:10 End\nRecorded: Now()",
-			CategoryId:  "22",
-			Tags: []string{
-				"test",
-				"vid",
-			},
-		},
-		Status: &youtube.VideoStatus{PrivacyStatus: "unlisted"},
-	}
-	call := yts.Videos.Insert([]string{"snippet", "status"}, upload)
-	file, err := os.Open("/media/jnrprgmr/7C000E4D000E0EB8/Videos/test_vid.mp4")
-	defer file.Close()
+	config, err := google.ConfigFromJSON(b, youtubeApi.YoutubeUploadScope)
 	if err != nil {
-		log.Fatalf("Error opening %v: %v", "/media/jnrprgmr/7C000E4D000E0EB8/Videos/test_vid.mp4", err)
+		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
-	response, err := call.Media(file).Do()
+	f, err := os.Open(os.Getenv("GOOGLE_OAUTH_TOKENS"))
+	if err != nil {
+		panic(errors.New("could not open OAUTH file, please run the scripts/auth.py to get the authorization json: " + err.Error()))
+	}
+	t := &oauth2.Token{}
+	err = json.NewDecoder(f).Decode(t)
+	defer f.Close()
+	tok, err := t, err
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Upload successful! Video ID: %v\n", response.Id)
-	// call := yts.Channels.List([]string{"snippet", "contentDetails", "statistics"})
-	// call = call.ForUsername("GoogleDevelopers")
-	// response, err := call.Do()
-	// if err != nil {
-	// 	log.Fatalf("Error making API call: %v", err.Error())
-	// }
-	// fmt.Println(fmt.Sprintf("This channel's ID is %s. Its title is '%s', "+
-	// 	"and it has %d views.",
-	// 	response.Items[0].Id,
-	// 	response.Items[0].Snippet.Title,
-	// 	response.Items[0].Statistics.ViewCount))
+	client := config.Client(ctx, tok)
+	service, err := youtubeApi.New(client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	yt := youtube.New(service)
+	////
+	yt.UploadVideo("/media/jnrprgmr/7C000E4D000E0EB8/Videos/test_vid.mp4")
+	/////
 	twitch := twitch.New(twitchCli)
 	h := handlers.New(twitch, obs, db)
 	http.HandleFunc("/twitch", h.TwitchHandler)

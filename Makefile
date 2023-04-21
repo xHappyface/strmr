@@ -15,5 +15,7 @@ run: clean
 db:
 	sqlite3 strmr.db < sql/schema.sql
 
-auth-youtube:
-	source scripts/token.sh && python3 auth.py
+auth-yt:
+	sudo apt install python3-pip
+	pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+	source scripts/token.sh && python3 scripts/auth.py

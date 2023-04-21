@@ -2,4 +2,3 @@ go.sum
 /vendor/
 scripts/token.sh
 *.db
-oauth2.json
