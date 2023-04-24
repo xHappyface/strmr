@@ -87,7 +87,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
-	config, err := google.ConfigFromJSON(b, youtubeApi.YoutubeUploadScope)
+	config, err := google.ConfigFromJSON(b, youtubeApi.YoutubeUploadScope, youtubeApi.YoutubeForceSslScope, youtubeApi.YoutubepartnerScope)
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
@@ -107,10 +107,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	yt := youtube.New(service)
-	////
-	yt.UploadVideo("/media/jnrprgmr/7C000E4D000E0EB8/Videos/test_vid.mp4")
-	/////
+	_ = youtube.New(service)
+	// ////
+	// yt := youtube.New(service)
+	// err = yt.InsertCaption("8ICxJgs7zJk", "/media/jnrprgmr/7C000E4D000E0EB8/Videos/captions.srt")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// /////
 	twitch := twitch.New(twitchCli)
 	h := handlers.New(twitch, obs, db)
 	http.HandleFunc("/twitch", h.TwitchHandler)
@@ -124,6 +128,9 @@ func main() {
 	http.HandleFunc("/obs/stream", h.UpdateOBSStream)
 
 	http.HandleFunc("/youtube", h.YouTubeHandler)
+
+	http.HandleFunc("/avatar_status", h.AvatarStatus)
+	http.HandleFunc("/avatar", h.Avatar)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

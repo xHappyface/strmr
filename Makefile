@@ -1,5 +1,10 @@
 SHELL := /bin/bash
 
+deps:
+	sudo apt install espeak
+	sudo apt install python3-pip
+	pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
 clean:
 	rm -rf vendor
 	rm -f go.sum
@@ -16,6 +21,4 @@ db:
 	sqlite3 strmr.db < sql/schema.sql
 
 auth-yt:
-	sudo apt install python3-pip
-	pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 	source scripts/token.sh && python3 scripts/auth.py

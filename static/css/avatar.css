@@ -1,0 +1,17 @@
+.close {
+    background-color: black;
+    width: 215px;
+    height: 10px;
+    border-radius: 7px 7px 100px 100px;
+    top: 250px;
+    left: 90px;
+}
+
+.open {
+    background-color: black;
+    width: 215px;
+    height: 90px;
+    border-radius: 7px 7px 100px 100px;
+    top: 250px;
+    left: 90px;
+}
