@@ -21,4 +21,4 @@ db:
 	sqlite3 strmr.db < sql/schema.sql
 
 auth-yt:
-	source scripts/token.sh && python3 scripts/auth.py
+	source scripts/token.sh && go run scripts/quickstart.go

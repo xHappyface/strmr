@@ -107,13 +107,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_ = youtube.New(service)
+	// _ = youtube.New(service)
 	// ////
-	// yt := youtube.New(service)
-	// err = yt.InsertCaption("8ICxJgs7zJk", "/media/jnrprgmr/7C000E4D000E0EB8/Videos/captions.srt")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	yt := youtube.New(service)
+	err = yt.InsertCaption("8ICxJgs7zJk", "/media/jnrprgmr/7C000E4D000E0EB8/Videos/captions.srt")
+	if err != nil {
+		log.Fatal(err)
+	}
 	// /////
 	twitch := twitch.New(twitchCli)
 	h := handlers.New(twitch, obs, db)
