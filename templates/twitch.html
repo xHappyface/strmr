@@ -20,14 +20,19 @@
                 <span>Authorized for {{ $key }}</span>
                 <br>
             {{ end }}
-            <input id="title-text" type="text"/><button id="change-title">Change title</button>
+            <input id="title-text" type="text" size="50" {{ if .Channel }}value="{{ .Channel.Title }}"{{ end }}/>
             <select id="choose-game">
                 {{ range $key, $value := .Games }}
-                    <option id="{{ $value }}">{{ $key }}</option>
+                    <option value="{{ $value.ID }}"{{ if $value.Selected }}selected{{ end }}>{{ $key }}</option>
                 {{ end }}
             </select>
+            <button id="change-stream">Update Stream</button>
             <br>
             <input type="text" id="search-categories"/>
+            <button id="search-categories-submit">Search</button>
+            <div id="categories">
+
+            </div>
         {{ end }}
     </body>
 <html>

@@ -1,8 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
+	"io/ioutil"
 	"net/http"
 	"os/exec"
 	"text/template"
@@ -11,18 +12,35 @@ import (
 
 var talking = false
 
+type avatarRequest struct {
+	Text string `json:"text"`
+}
+
 func (h *Handlers) AvatarStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
+		var data avatarRequest
+		reqBody, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			h.ErrorResponse(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		json.Unmarshal(reqBody, &data)
 		talking = true
-		s := "Make the computer speak for a long time without taking a break and get the time amount"
-		cmd := exec.Command("espeak", "-x", s)
+		cmd := exec.Command("espeak", "-x", data.Text)
 		start := time.Now()
 		if err := cmd.Run(); err != nil {
-			log.Fatal(err)
+			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		end := time.Now()
 		t := end.Sub(start)
-		fmt.Println(t)
+		fmt.Println("ere")
+		err = h.database.InsertSubtitle(data.Text, t.Seconds())
+		if err != nil {
+			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		//fmt.Println(t.Seconds())
 		talking = false
 	} else if r.Method == http.MethodGet {
 		if talking {

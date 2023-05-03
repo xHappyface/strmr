@@ -151,3 +151,119 @@ func (database *Database) getLatestMetadataByKey(tx *sqlx.Tx, metadata_key strin
 	}
 	return &m, nil
 }
+
+func (database *Database) GetDistinctMetadataValuesByKey(metadata_key string) ([]Metadata, error) {
+	tx, err := database.db.Beginx()
+	if err != nil {
+		msg := "cannot begin transaction for GetDistinctMetadataValuesByKey: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	m, err := database.getDistinctMetadataValuesByKey(tx, metadata_key)
+	if err != nil {
+		msg := "cannot get metadata in GetDistinctMetadataValuesByKey: " + err.Error()
+		roll_err := tx.Rollback()
+		if roll_err != nil {
+			fatal := "cannot rollback in GetDistinctMetadataValuesByKey: " + msg + ": " + roll_err.Error()
+			return nil, errors.New(fatal)
+		}
+		return nil, errors.New(msg)
+	}
+	err = tx.Commit()
+	if err != nil {
+		msg := "cannot commit transaction in GetDistinctMetadataValuesByKey: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	return m, nil
+}
+
+func (database *Database) getDistinctMetadataValuesByKey(tx *sqlx.Tx, metadata_key string) ([]Metadata, error) {
+	cols := `metadata_value`
+	query := fmt.Sprintf(`SELECT DISTINCT %s FROM metadata WHERE metadata_key = $1`, cols)
+	stmt, err := tx.Preparex(query)
+	if err != nil {
+		msg := "cannot prepare statement in getDistinctMetadataValuesByKey: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	defer stmt.Close()
+	rows, err := stmt.Queryx(metadata_key)
+	if err != nil {
+		msg := "cannot query metadata from getDistinctMetadataValuesByKey: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	metadatas := []Metadata{}
+	for rows.Next() {
+		var m Metadata
+		err = rows.StructScan(&m)
+		if err != nil {
+			switch err {
+			case sql.ErrNoRows:
+				return nil, nil
+			default:
+				msg := "cannot unmarshal metadata from getDistinctMetadataValuesByKey: " + err.Error()
+				return nil, errors.New(msg)
+			}
+		}
+		metadatas = append(metadatas, m)
+	}
+	return metadatas, nil
+}
+
+func (database *Database) GetMetadataByKeyAndTimeRange(key string, start int64, end int64) ([]Metadata, error) {
+	tx, err := database.db.Beginx()
+	if err != nil {
+		msg := "cannot begin transaction for GetMetadataByKeyAndTimeRange: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	if start >= end {
+		msg := "cannot get metadatabecause start >= end for GetMetadataByKeyAndTimeRange: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	m, err := database.getMetadataByKeyAndTimeRange(tx, key, start, end)
+	if err != nil {
+		msg := "cannot get metadata in GetMetadataByKeyAndTimeRange: " + err.Error()
+		roll_err := tx.Rollback()
+		if roll_err != nil {
+			fatal := "cannot rollback in GetMetadataByKeyAndTimeRange: " + msg + ": " + roll_err.Error()
+			return nil, errors.New(fatal)
+		}
+		return nil, errors.New(msg)
+	}
+	err = tx.Commit()
+	if err != nil {
+		msg := "cannot commit transaction in GetMetadataByKeyAndTimeRange: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	return m, nil
+}
+
+func (database *Database) getMetadataByKeyAndTimeRange(tx *sqlx.Tx, metadata_key string, start int64, end int64) ([]Metadata, error) {
+	cols := `id, metadata_key, metadata_value, insert_time`
+	query := fmt.Sprintf(`SELECT %s FROM metadata WHERE metadata_key = $1 AND insert_time >= $2 AND insert_time <= $3 ORDER BY insert_time ASC`, cols)
+	stmt, err := tx.Preparex(query)
+	if err != nil {
+		msg := "cannot prepare statement in getMetadataByKeyAndTimeRange: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	defer stmt.Close()
+	rows, err := stmt.Queryx(metadata_key, start, end)
+	if err != nil {
+		msg := "cannot query metadata from getMetadataByKeyAndTimeRange: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	metadatas := []Metadata{}
+	for rows.Next() {
+		var m Metadata
+		err = rows.StructScan(&m)
+		if err != nil {
+			switch err {
+			case sql.ErrNoRows:
+				return nil, nil
+			default:
+				msg := "cannot unmarshal metadata from getMetadataByKeyAndTimeRange: " + err.Error()
+				return nil, errors.New(msg)
+			}
+		}
+		metadatas = append(metadatas, m)
+	}
+	return metadatas, nil
+}

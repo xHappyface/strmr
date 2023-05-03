@@ -27,7 +27,7 @@ func New(client *helix.Client) *Twitch {
 	}
 }
 
-func (t *Twitch) ChangeStreamTitle(username string, title string) error {
+func (t *Twitch) ChangeStream(username string, title string, category_id string) error {
 	authorized, _, err := t.Client.ValidateToken(t.Token)
 	if !authorized {
 		return errors.New("Not authorized to change stream title: " + err.Error())
@@ -39,7 +39,7 @@ func (t *Twitch) ChangeStreamTitle(username string, title string) error {
 	}
 	_, err = t.Client.EditChannelInformation(&helix.EditChannelInformationParams{
 		BroadcasterID: broadcaster_id,
-		//GameID:              "456789",
+		GameID:        category_id,
 		//BroadcasterLanguage: "en",
 		Title: title,
 		Delay: 0,
@@ -111,6 +111,38 @@ func (t *Twitch) GetUsers(names []string) (map[string]string, error) {
 		users[user.Login] = user.ID
 	}
 	return users, nil
+}
+
+type Channel struct {
+	Title        string
+	CategoryName string
+	CategoryID   string
+}
+
+func (t *Twitch) GetChannelInformation(ids []string) (map[string]Channel, error) {
+	authorized, _, err := t.Client.ValidateToken(t.Token)
+	if !authorized {
+		return nil, errors.New("Not authorized to get channels")
+	}
+	if err != nil {
+		return nil, errors.New("Error getting channels in SearchChannels: " + err.Error())
+	}
+	channelsResp, err := t.Client.GetChannelInformation(&helix.GetChannelInformationParams{
+		BroadcasterIDs: ids,
+	})
+	if err != nil {
+		return nil, errors.New("Could not get channels: " + err.Error())
+	}
+	channels := map[string]Channel{}
+	for k := range channelsResp.Data.Channels {
+		channel := Channel{
+			Title:        channelsResp.Data.Channels[k].Title,
+			CategoryName: channelsResp.Data.Channels[k].GameName,
+			CategoryID:   channelsResp.Data.Channels[k].GameID,
+		}
+		channels[channelsResp.Data.Channels[k].BroadcasterName] = channel
+	}
+	return channels, nil
 }
 
 func (t *Twitch) SearchCategories(query string) (map[string]Category, error) {

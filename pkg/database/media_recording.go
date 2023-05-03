@@ -11,9 +11,11 @@ import (
 type MediaRecording struct {
 	ID         int64  `db:"id"`
 	FileName   string `db:"file_name"`
+	Extension  string `db:"extension"`
 	Directory  string `db:"directory"`
 	StartTime  int64  `db:"start_time"`
-	EndTime    int64  `db:"end_time"`
+	EndTime    *int64 `db:"end_time"`
+	Uploaded   int64  `db:"uploaded"`
 	InsertTime int64  `db:"insert_time"`
 }
 
@@ -41,7 +43,7 @@ func (database *Database) GetMediaRecordingByID(id int64) (*MediaRecording, erro
 }
 
 func (database *Database) getMediaRecordingByID(tx *sqlx.Tx, id int64) (*MediaRecording, error) {
-	cols := `id, file_name, directory, start_time, end_time, insert_time`
+	cols := `id, file_name, extension, directory, start_time, end_time, uploaded, insert_time`
 	query := fmt.Sprintf(`SELECT %s FROM media_recording WHERE id = $1`, cols)
 	stmt, err := tx.Preparex(query)
 	if err != nil {
@@ -89,7 +91,7 @@ func (database *Database) GetLatestMediaRecording() (*MediaRecording, error) {
 }
 
 func (database *Database) getLatestMediaRecording(tx *sqlx.Tx) (*MediaRecording, error) {
-	cols := `id, file_name, directory, start_time, end_time, insert_time`
+	cols := `id, file_name, extension, directory, start_time, end_time, uploaded, insert_time`
 	query := fmt.Sprintf(`SELECT %s FROM media_recording WHERE end_time IS NULL ORDER BY insert_time DESC LIMIT 1`, cols)
 	stmt, err := tx.Preparex(query)
 	if err != nil {
@@ -191,4 +193,64 @@ func (database *Database) insertMediaRecording(tx *sqlx.Tx, file_name string, di
 		return errors.New(msg)
 	}
 	return nil
+}
+
+func (database *Database) GetAllMediaRecordingsByUploaded(uploaded bool) ([]MediaRecording, error) {
+	tx, err := database.db.Beginx()
+	if err != nil {
+		msg := "cannot begin transaction for GetAllMediaRecordingsByUploaded: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	m, err := database.getAllMediaRecordingsByUploaded(tx, uploaded)
+	if err != nil {
+		msg := "cannot get media recordings in GetAllMediaRecordingsByUploaded: " + err.Error()
+		roll_err := tx.Rollback()
+		if roll_err != nil {
+			fatal := "cannot rollback in GetAllMediaRecordingsByUploaded: " + msg + ": " + roll_err.Error()
+			return nil, errors.New(fatal)
+		}
+		return nil, errors.New(msg)
+	}
+	err = tx.Commit()
+	if err != nil {
+		msg := "cannot commit transaction in GetAllMediaRecordingsByUploaded: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	return m, nil
+}
+
+func (database *Database) getAllMediaRecordingsByUploaded(tx *sqlx.Tx, uploaded bool) ([]MediaRecording, error) {
+	cols := `id, file_name, extension, directory, start_time, end_time, uploaded, insert_time`
+	query := fmt.Sprintf(`SELECT %s FROM media_recording WHERE uploaded = $1 AND end_time IS NOT NULL`, cols)
+	stmt, err := tx.Preparex(query)
+	if err != nil {
+		msg := "cannot prepare statement in getAllMediaRecordingsByUploaded: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	defer stmt.Close()
+	u := int64(0)
+	if uploaded {
+		u = int64(1)
+	}
+	rows, err := stmt.Queryx(u)
+	if err != nil {
+		msg := "cannot query media recordings from getAllMediaRecordingsByUploaded: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	media_recordings := []MediaRecording{}
+	for rows.Next() {
+		var mr MediaRecording
+		err = rows.StructScan(&mr)
+		if err != nil {
+			switch err {
+			case sql.ErrNoRows:
+				return nil, nil
+			default:
+				msg := "cannot unmarshal media recording from getAllMediaRecordingsByUploaded: " + err.Error()
+				return nil, errors.New(msg)
+			}
+		}
+		media_recordings = append(media_recordings, mr)
+	}
+	return media_recordings, nil
 }

@@ -52,6 +52,16 @@ $(() => {
             data: JSON.stringify(payload)
         });
     });
+    $("#avatar-text-submit").on("click", function() {
+        payload = {
+            text: $("#avatar-text").val()
+        }
+        $.ajax({
+            type: 'POST',
+            url: "/avatar_status",
+            data: JSON.stringify(payload)
+        })
+    })
     $("#update-stream").on("click", function() {
         var streamEnabled = $("#stream-enabled").is(":checked")
         var recordEnabled = $("#record-enabled").is(":checked")

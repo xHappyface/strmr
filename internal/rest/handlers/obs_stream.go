@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -62,7 +63,8 @@ func (h *Handlers) UpdateOBSStream(w http.ResponseWriter, r *http.Request) {
 					h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-				err = h.obs.SetProfileParameter("FilenameFormatting", time.Now().UTC().Format(time.RFC3339))
+				file_name_format := strings.ReplaceAll(time.Now().UTC().Format(time.RFC3339), ":", "_")
+				err = h.obs.SetProfileParameter("FilenameFormatting", file_name_format)
 				if err != nil {
 					h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
 					return

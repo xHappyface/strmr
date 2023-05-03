@@ -12,5 +12,14 @@
     </head>
     <body>
         Test
+        <div id="videos">
+            {{ range .Recordings }}
+                <div id="{{ .ID }}">
+                    <br>
+                    {{ .Directory }}/{{ .FileName }}.{{ .Extension }}
+                    <br>
+                </div>
+            {{ end }}
+        </div>
     </body>
 <html>

@@ -4,12 +4,59 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 
 	"google.golang.org/api/youtube/v3"
 )
 
 type YouTube struct {
 	service *youtube.Service
+}
+
+type Metadata struct {
+	Text  string
+	Start int64
+}
+
+func GetTimestamp(ts int64) string {
+	hours := ts / 3600
+	rem := ts % 3600
+	min := rem / 60
+	rem = rem % 60
+	sec := rem
+	return fmt.Sprintf("%02s", strconv.Itoa(int(hours))) + ":" + fmt.Sprintf("%02s", strconv.Itoa(int(min))) + ":" + fmt.Sprintf("%02s", strconv.Itoa(int(sec)))
+}
+
+type Subtitle struct {
+	Text  string
+	Start int64
+	End   int64
+}
+
+func CreateSubtitleText(subtitles []Subtitle) string {
+	text := ""
+	for i := range subtitles {
+		s := subtitles[i]
+		text = text + strconv.Itoa(i+1) + "\n" + GetTimestamp(s.Start) + ",000 --> " + GetTimestamp(s.End) + ",000\n" + s.Text + "\n\n"
+	}
+	return text
+}
+
+type YouTubeData struct {
+	File       string
+	Categories []Metadata
+	Titles     []Metadata
+	Tags       []Metadata
+	Tasks      []Metadata
+	Subtitles  []Subtitle
+}
+
+func CreateMetadataText(metadata []Metadata, initial string) string {
+	text := "00:00:00 " + initial + "\n"
+	for i := range metadata {
+		text = text + GetTimestamp(metadata[i].Start) + " " + metadata[i].Text + "\n"
+	}
+	return text
 }
 
 func New(svc *youtube.Service) *YouTube {

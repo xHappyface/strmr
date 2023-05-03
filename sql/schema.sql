@@ -23,10 +23,19 @@ CREATE TABLE metadata (
 );
 
 CREATE TABLE media_recording (
-    id           INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')           PRIMARY KEY AUTOINCREMENT,
+    id           INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')                                   PRIMARY KEY AUTOINCREMENT,
     file_name    TEXT NOT NULL CHECK(TYPEOF(file_name) = 'text'),
+    extension    TEXT NOT NULL CHECK(TYPEOF(extension) = 'text' AND extension IN ('mkv', 'mp4'))  DEFAULT('mkv'),
     directory    TEXT NOT NULL CHECK(TYPEOF(directory) = 'text'),
-    start_time   INTEGER NOT NULL CHECK(TYPEOF(start_time) = 'integer')   DEFAULT(CAST(strftime('%s', 'now') AS INTEGER)),
+    start_time   INTEGER NOT NULL CHECK(TYPEOF(start_time) = 'integer')                           DEFAULT(CAST(strftime('%s', 'now') AS INTEGER)),
     end_time     INTEGER,
+    uploaded     INTEGER NOT NULL CHECK(TYPEOF(uploaded) = 'integer' AND uploaded IN (0, 1))      DEFAULT(0),
+    insert_time  INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')                          DEFAULT(CAST(strftime('%s', 'now') AS INTEGER))
+);
+
+CREATE TABLE subtitles (
+    id           INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')           PRIMARY KEY AUTOINCREMENT,
+    subtitle     TEXT NOT NULL CHECK(TYPEOF(subtitle) = 'text'),
+    duration     REAL NOT NULL CHECK(TYPEOF(duration) = 'real'),
     insert_time  INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER))
 );
