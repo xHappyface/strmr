@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"google.golang.org/api/youtube/v3"
 )
@@ -59,18 +60,26 @@ func CreateMetadataText(metadata []Metadata, initial string) string {
 	return text
 }
 
+func CreateTitleText(titles []Metadata, delimiter string) string {
+	text := []string{}
+	for i := range titles {
+		text = append(text, titles[i].Text)
+	}
+	return strings.Join(text, delimiter)
+}
+
 func New(svc *youtube.Service) *YouTube {
 	return &YouTube{
 		service: svc,
 	}
 }
 
-func (yt *YouTube) UploadVideo(file_name string) error {
+func (yt *YouTube) UploadVideo(file_name string, title string, description string) (*string, error) {
 	fmt.Println("starting video upload")
 	upload := &youtube.Video{
 		Snippet: &youtube.VideoSnippet{
-			Title:                "Test Vid",
-			Description:          "0:00 Intro\n0:10 End\nRecorded: Now()",
+			Title:                title,
+			Description:          description,
 			CategoryId:           "22",
 			DefaultAudioLanguage: "en",
 			DefaultLanguage:      "en",
@@ -84,15 +93,15 @@ func (yt *YouTube) UploadVideo(file_name string) error {
 	call := yt.service.Videos.Insert([]string{"snippet", "status"}, upload)
 	file, err := os.Open(file_name)
 	if err != nil {
-		return errors.New("Error opening " + file_name + ": " + err.Error())
+		return nil, errors.New("Error opening " + file_name + ": " + err.Error())
 	}
 	defer file.Close()
 	response, err := call.Media(file).Do()
 	if err != nil {
-		return errors.New(err.Error())
+		return nil, errors.New(err.Error())
 	}
 	fmt.Printf("Upload successful! Video ID: %v\n", response.Id)
-	return nil
+	return &response.Id, nil
 }
 
 func (yt *YouTube) InsertCaption(video_id string, file_name string) error {

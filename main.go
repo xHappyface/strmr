@@ -107,16 +107,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_ = youtube.New(service)
-	// ////
-	// yt := youtube.New(service)
-	// err = yt.UploadVideo("/media/jnrprgmr/7C000E4D000E0EB8/Videos/test_vid.mp4")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// /////
+	yt := youtube.New(service)
 	twitch := twitch.New(twitchCli)
-	h := handlers.New(twitch, obs, db)
+	h := handlers.New(twitch, obs, yt, db)
 	http.HandleFunc("/twitch", h.TwitchHandler)
 	http.HandleFunc("/twitch/update", h.TwitchUpdateHandler)
 	http.HandleFunc("/twitch/auth", h.TwitchAuthHandler)
@@ -128,6 +121,7 @@ func main() {
 	http.HandleFunc("/obs/stream", h.UpdateOBSStream)
 
 	http.HandleFunc("/youtube", h.YouTubeHandler)
+	http.HandleFunc("/youtube_upload", h.YouTubeUploadHandler)
 
 	http.HandleFunc("/avatar_status", h.AvatarStatus)
 	http.HandleFunc("/avatar", h.Avatar)

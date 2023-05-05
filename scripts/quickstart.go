@@ -32,7 +32,7 @@ func getClient(ctx context.Context, config *oauth2.Config) *http.Client {
 	}
 	tok, err := tokenFromFile(cacheFile)
 	if err != nil {
-		authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+		authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 		tok, err = getTokenFromWeb(config, authURL)
 		if err == nil {
 			saveToken(cacheFile, tok)

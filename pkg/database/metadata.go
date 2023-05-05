@@ -152,6 +152,54 @@ func (database *Database) getLatestMetadataByKey(tx *sqlx.Tx, metadata_key strin
 	return &m, nil
 }
 
+func (database *Database) GetLatestMetadataByKeyBeforeTime(metadata_key string, timestamp int64) (*Metadata, error) {
+	tx, err := database.db.Beginx()
+	if err != nil {
+		msg := "cannot begin transaction for GetLatestMetadataByKeyBeforeTime: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	m, err := database.getLatestMetadataByKeyBeforeTime(tx, metadata_key, timestamp)
+	if err != nil {
+		msg := "cannot get metadata in GetLatestMetadataByKeyBeforeTime: " + err.Error()
+		roll_err := tx.Rollback()
+		if roll_err != nil {
+			fatal := "cannot rollback in GetLatestMetadataByKeyBeforeTime: " + msg + ": " + roll_err.Error()
+			return nil, errors.New(fatal)
+		}
+		return nil, errors.New(msg)
+	}
+	err = tx.Commit()
+	if err != nil {
+		msg := "cannot commit transaction in GetLatestMetadataByKeyBeforeTime: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	return m, nil
+}
+
+func (database *Database) getLatestMetadataByKeyBeforeTime(tx *sqlx.Tx, metadata_key string, timestamp int64) (*Metadata, error) {
+	cols := `id, metadata_key, metadata_value, insert_time`
+	query := fmt.Sprintf(`SELECT %s FROM metadata WHERE metadata_key = $1 AND insert_time <= $2 ORDER BY insert_time DESC LIMIT 1`, cols)
+	stmt, err := tx.Preparex(query)
+	if err != nil {
+		msg := "cannot prepare statement in getLatestMetadataByKeyBeforeTime: " + err.Error()
+		return nil, errors.New(msg)
+	}
+	defer stmt.Close()
+	row := stmt.QueryRowx(metadata_key, timestamp)
+	var m Metadata
+	err = row.StructScan(&m)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return nil, nil
+		default:
+			msg := "cannot unmarshal metadata from getLatestMetadataByKeyBeforeTime: " + err.Error()
+			return nil, errors.New(msg)
+		}
+	}
+	return &m, nil
+}
+
 func (database *Database) GetDistinctMetadataValuesByKey(metadata_key string) ([]Metadata, error) {
 	tx, err := database.db.Beginx()
 	if err != nil {

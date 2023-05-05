@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os/exec"
@@ -34,7 +33,6 @@ func (h *Handlers) AvatarStatus(w http.ResponseWriter, r *http.Request) {
 		}
 		end := time.Now()
 		t := end.Sub(start)
-		fmt.Println("ere")
 		err = h.database.InsertSubtitle(data.Text, t.Seconds())
 		if err != nil {
 			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)

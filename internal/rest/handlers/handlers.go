@@ -7,11 +7,13 @@ import (
 	"github.com/jnrprgmr/strmr/pkg/database"
 	"github.com/jnrprgmr/strmr/pkg/obs"
 	"github.com/jnrprgmr/strmr/pkg/twitch"
+	"github.com/jnrprgmr/strmr/pkg/youtube"
 )
 
 type Handlers struct {
 	twitch   *twitch.Twitch
 	obs      *obs.OBS
+	youtube  *youtube.YouTube
 	database *database.Database
 }
 
@@ -35,10 +37,11 @@ func (h *Handlers) ErrorResponse(w http.ResponseWriter, message string, code int
 	w.Write(b)
 }
 
-func New(twitchCli *twitch.Twitch, obsCli *obs.OBS, db *database.Database) *Handlers {
+func New(twitchCli *twitch.Twitch, obsCli *obs.OBS, yt *youtube.YouTube, db *database.Database) *Handlers {
 	return &Handlers{
 		twitch:   twitchCli,
 		obs:      obsCli,
+		youtube:  yt,
 		database: db,
 	}
 }
