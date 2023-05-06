@@ -54,8 +54,7 @@ func getTokenFromWeb(config *oauth2.Config, authURL string) (*oauth2.Token, erro
 	if err != nil {
 		log.Fatalf("Unable to open authorization URL in web server: %v", err)
 	} else {
-		fmt.Println("Your browser has been opened to an authorization URL.",
-			" This program will resume once authorization has been provided.\n")
+		fmt.Println("Your browser has been opened to an authorization URL. This program will resume once authorization has been provided.")
 		fmt.Println(authURL)
 	}
 

@@ -154,6 +154,50 @@ func (database *Database) endActiveMediaRecordings(tx *sqlx.Tx) error {
 	return nil
 }
 
+func (database *Database) SetMediaRecordingUploadedByID(id int64, uploaded bool) error {
+	tx, err := database.db.Beginx()
+	if err != nil {
+		msg := "cannot begin transaction for SetMediaRecordingUploadedByID: " + err.Error()
+		return errors.New(msg)
+	}
+	err = database.setMediaRecordingUploadedByID(tx, id, uploaded)
+	if err != nil {
+		msg := "cannot end active media recordings in SetMediaRecordingUploadedByID: " + err.Error()
+		roll_err := tx.Rollback()
+		if roll_err != nil {
+			fatal := "cannot rollback in SetMediaRecordingUploadedByID: " + msg + ": " + roll_err.Error()
+			return errors.New(fatal)
+		}
+		return errors.New(msg)
+	}
+	err = tx.Commit()
+	if err != nil {
+		msg := "cannot commit transaction in SetMediaRecordingUploadedByID: " + err.Error()
+		return errors.New(msg)
+	}
+	return nil
+}
+
+func (database *Database) setMediaRecordingUploadedByID(tx *sqlx.Tx, id int64, uploaded bool) error {
+	query := `UPDATE media_recording SET uploaded = $1 WHERE id = $2`
+	stmt, err := tx.Preparex(query)
+	if err != nil {
+		msg := "cannot prepare statement in setMediaRecordingUploadedByID: " + err.Error()
+		return errors.New(msg)
+	}
+	defer stmt.Close()
+	u := int64(0)
+	if uploaded {
+		u = int64(1)
+	}
+	_, err = stmt.Exec(u, id)
+	if err != nil {
+		msg := "cannot execute query in setMediaRecordingUploadedByID: " + err.Error()
+		return errors.New(msg)
+	}
+	return nil
+}
+
 func (database *Database) InsertMediaRecording(file_name string, directory string) error {
 	tx, err := database.db.Beginx()
 	if err != nil {

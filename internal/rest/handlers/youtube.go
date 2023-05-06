@@ -68,7 +68,29 @@ func (h *Handlers) convertToYouTubeMetadata(media_recordings database.MediaRecor
 	if err != nil {
 		return nil, err
 	}
+	initial_category, err := h.database.GetLatestMetadataByKeyBeforeTime("category", media_recordings.StartTime)
+	if err != nil {
+		return nil, err
+	}
+	if initial_category != nil {
+		categories = append(categories, *initial_category)
+	}
 	yt_categories, err := ConvertRecordingMetadataToYouTubeMetadata(media_recordings, categories)
+	if err != nil {
+		return nil, err
+	}
+	tags, err := h.database.GetMetadataByKeyAndTimeRange("tags", media_recordings.StartTime, *media_recordings.EndTime)
+	if err != nil {
+		return nil, err
+	}
+	initial_tags, err := h.database.GetLatestMetadataByKeyBeforeTime("tags", media_recordings.StartTime)
+	if err != nil {
+		return nil, err
+	}
+	if initial_tags != nil {
+		tags = append(tags, *initial_tags)
+	}
+	yt_tags, err := ConvertRecordingMetadataToYouTubeMetadata(media_recordings, tags)
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +122,7 @@ func (h *Handlers) convertToYouTubeMetadata(media_recordings database.MediaRecor
 		Titles:     yt_titles,
 		Tasks:      yt_tasks,
 		Subtitles:  yt_subtitles,
+		Tags:       yt_tags,
 	}
 	return yt_data, nil
 }
@@ -118,10 +141,6 @@ func (h *Handlers) YouTubeHandler(w http.ResponseWriter, r *http.Request) {
 				h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			// fmt.Println(youtube.CreateMetadataText(yt_data.Categories, "Stream starting"))
-			// fmt.Println(youtube.CreateMetadataText(yt_data.Titles, "Stream starting"))
-			// fmt.Println(youtube.CreateMetadataText(yt_data.Tasks, "Stream starting"))
-			// fmt.Println(youtube.CreateSubtitleText(yt_data.Subtitles))
 			data[media_recordings[i].ID] = *yt_data
 		}
 		tmpl := template.Must(template.ParseFiles("./templates/youtube.html"))

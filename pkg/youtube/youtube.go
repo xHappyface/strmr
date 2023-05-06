@@ -74,7 +74,7 @@ func New(svc *youtube.Service) *YouTube {
 	}
 }
 
-func (yt *YouTube) UploadVideo(file_name string, title string, description string) (*string, error) {
+func (yt *YouTube) UploadVideo(file_name string, title string, description string, tags []string, recording_time string) (*string, error) {
 	fmt.Println("starting video upload")
 	upload := &youtube.Video{
 		Snippet: &youtube.VideoSnippet{
@@ -88,9 +88,16 @@ func (yt *YouTube) UploadVideo(file_name string, title string, description strin
 				"vid",
 			},
 		},
-		Status: &youtube.VideoStatus{PrivacyStatus: "private"},
+		Status: &youtube.VideoStatus{
+			PrivacyStatus:           "private",
+			MadeForKids:             false,
+			SelfDeclaredMadeForKids: false,
+		},
+		RecordingDetails: &youtube.VideoRecordingDetails{
+			RecordingDate: recording_time,
+		},
 	}
-	call := yt.service.Videos.Insert([]string{"snippet", "status"}, upload)
+	call := yt.service.Videos.Insert([]string{"snippet", "status", "recordingDetails"}, upload)
 	file, err := os.Open(file_name)
 	if err != nil {
 		return nil, errors.New("Error opening " + file_name + ": " + err.Error())
