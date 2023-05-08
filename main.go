@@ -122,6 +122,7 @@ func main() {
 
 	http.HandleFunc("/youtube", h.YouTubeHandler)
 	http.HandleFunc("/youtube_upload", h.YouTubeUploadHandler)
+	http.HandleFunc("/youtube_category", h.YouTubeCategoryHandler)
 
 	http.HandleFunc("/avatar_status", h.AvatarStatus)
 	http.HandleFunc("/avatar", h.Avatar)

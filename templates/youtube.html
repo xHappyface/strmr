@@ -12,6 +12,23 @@
     </head>
     <body>
         Test
+        <div id="categories">
+            {{ $cats := .Categories }}
+            {{ $yt_cats := .YouTubeCategories }}
+            {{ range $cat := $cats }}
+            <div id="{{ .ID }}">
+                <span class="category-name">{{ $cat.CategoryName }}</span>
+                <select class="category-options">
+                    {{ range $yt_cat := $yt_cats }}
+                    <option value="{{ $yt_cat.ID }}" class="youtube-category" {{ if eq $cat.RelatedID $yt_cat.ID }}selected{{ end }}>
+                        {{ $yt_cat.Title }}
+                    </option>
+                    {{ end }}
+                </select>
+                <button class="save-category">Save</button>
+            </div>
+            {{ end }}
+        </div>
         <div id="videos">
             {{ range .Recordings }}
                 <div id="{{ .ID }}">

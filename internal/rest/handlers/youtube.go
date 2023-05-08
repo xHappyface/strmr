@@ -68,12 +68,13 @@ func (h *Handlers) convertToYouTubeMetadata(media_recordings database.MediaRecor
 	if err != nil {
 		return nil, err
 	}
-	initial_category, err := h.database.GetLatestMetadataByKeyBeforeTime("category", media_recordings.StartTime)
+	initial_category, err := h.database.GetLatestMetadataByKeyBeforeTime("category", media_recordings.StartTime, 1)
 	if err != nil {
 		return nil, err
 	}
-	if initial_category != nil {
-		categories = append(categories, *initial_category)
+	if len(initial_category) != 0 {
+
+		categories = append(categories, initial_category...)
 	}
 	yt_categories, err := ConvertRecordingMetadataToYouTubeMetadata(media_recordings, categories)
 	if err != nil {
@@ -83,12 +84,12 @@ func (h *Handlers) convertToYouTubeMetadata(media_recordings database.MediaRecor
 	if err != nil {
 		return nil, err
 	}
-	initial_tags, err := h.database.GetLatestMetadataByKeyBeforeTime("tags", media_recordings.StartTime)
+	initial_tags, err := h.database.GetLatestMetadataByKeyBeforeTime("tags", media_recordings.StartTime, 1)
 	if err != nil {
 		return nil, err
 	}
-	if initial_tags != nil {
-		tags = append(tags, *initial_tags)
+	if len(initial_tags) != 0 {
+		tags = append(tags, initial_tags...)
 	}
 	yt_tags, err := ConvertRecordingMetadataToYouTubeMetadata(media_recordings, tags)
 	if err != nil {
@@ -98,12 +99,12 @@ func (h *Handlers) convertToYouTubeMetadata(media_recordings database.MediaRecor
 	if err != nil {
 		return nil, err
 	}
-	initial_title, err := h.database.GetLatestMetadataByKeyBeforeTime("title", media_recordings.StartTime)
+	initial_title, err := h.database.GetLatestMetadataByKeyBeforeTime("title", media_recordings.StartTime, 1)
 	if err != nil {
 		return nil, err
 	}
-	if initial_title != nil {
-		titles = append(titles, *initial_title)
+	if len(initial_title) != 0 {
+		titles = append(titles, initial_title...)
 	}
 	yt_titles, err := ConvertRecordingMetadataToYouTubeMetadata(media_recordings, titles)
 	if err != nil {
@@ -134,6 +135,16 @@ func (h *Handlers) YouTubeHandler(w http.ResponseWriter, r *http.Request) {
 			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		cats, err := h.database.GetAllCategories()
+		if err != nil {
+			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		yt_cats, err := h.youtube.GetCategories()
+		if err != nil {
+			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		data := map[int64]youtube.YouTubeData{}
 		for i := range media_recordings {
 			yt_data, err := h.convertToYouTubeMetadata(media_recordings[i])
@@ -145,12 +156,14 @@ func (h *Handlers) YouTubeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		tmpl := template.Must(template.ParseFiles("./templates/youtube.html"))
 		tmpl.Execute(w, struct {
-			Title      string
-			Javascript []string
-			CSS        []string
-			Recordings []database.MediaRecording
+			Title             string
+			Javascript        []string
+			CSS               []string
+			Recordings        []database.MediaRecording
+			YouTubeCategories []youtube.Category
+			Categories        []database.Category
 		}{
-			Title: "OBS stream settings",
+			Title: "YouTube settings",
 			Javascript: []string{
 				"vendor/jquery/jquery-3.6.3.min",
 				"youtube",
@@ -158,7 +171,9 @@ func (h *Handlers) YouTubeHandler(w http.ResponseWriter, r *http.Request) {
 			CSS: []string{
 				"youtube",
 			},
-			Recordings: media_recordings,
+			Recordings:        media_recordings,
+			YouTubeCategories: yt_cats,
+			Categories:        cats,
 		})
 	}
 }

@@ -1,12 +1,18 @@
 $(() => {
     $("#change-stream").on("click", function() {
+        var $tags = $("#tags").find(".tag")
+        var tags = []
+        for( var i = 0; i < $tags.length; i++) {
+            tags.push($($tags[i]).attr("data-tag"))
+        }
         var saveData = $.ajax({
             type: 'POST',
             url: "/twitch/update",
             data: JSON.stringify({
                 title: $("#title-text").val(),
                 category_id: $("#choose-game").find(":selected").val(),
-                category_name: $("#choose-game").find(":selected").text()
+                category_name: $("#choose-game").find(":selected").text(),
+                tags: tags
             }),
             contentType: "application/json; charset=utf-8",
             success: function(resultData) { alert("Save Complete") }
@@ -43,6 +49,36 @@ $(() => {
             $option.attr("value", category_id)
             $option.html(category_title)
             $("#choose-game").append($option)
+        }
+    });
+
+    $("#tags").on("click", ".remove-tag", function() {
+        $(this).closest(".tag").remove()
+    })
+
+    $("#create-tag").on("click", function() {
+        var val = $("#new-tag").val()
+        if(val.length > 0) {
+            var $tag = $("<div>")
+            $tag.attr("class", "tag")
+            $tag.attr("data-tag", val)
+            $tag.html(val)
+            var $btn = $("<button>")
+            $btn.attr("class", "remove-tag")
+            $btn.html("X")
+            $tag.append($btn)
+            var exists = false
+            for ( var i = 0; i < $(".tag").length; i++) {
+                var existing_tag = $($(".tag")[i]).attr("data-tag")
+                if(val === existing_tag) {
+                    exists = true
+                    break
+                }
+            }
+            if(!exists) {
+                $("#tags").append($tag)
+            }
+            $("#new-tag").val("")
         }
     })
 })

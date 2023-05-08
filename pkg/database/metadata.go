@@ -104,13 +104,13 @@ func (database *Database) insertMetadata(tx *sqlx.Tx, metadata_key string, metad
 	return nil
 }
 
-func (database *Database) GetLatestMetadataByKey(metadata_key string) (*Metadata, error) {
+func (database *Database) GetLatestMetadataByKey(metadata_key string, limit int) ([]Metadata, error) {
 	tx, err := database.db.Beginx()
 	if err != nil {
 		msg := "cannot begin transaction for GetLatestMetadataByKey: " + err.Error()
 		return nil, errors.New(msg)
 	}
-	m, err := database.getLatestMetadataByKey(tx, metadata_key)
+	m, err := database.getLatestMetadataByKey(tx, metadata_key, limit)
 	if err != nil {
 		msg := "cannot get metadata in GetLatestMetadataByKey: " + err.Error()
 		roll_err := tx.Rollback()
@@ -128,37 +128,45 @@ func (database *Database) GetLatestMetadataByKey(metadata_key string) (*Metadata
 	return m, nil
 }
 
-func (database *Database) getLatestMetadataByKey(tx *sqlx.Tx, metadata_key string) (*Metadata, error) {
+func (database *Database) getLatestMetadataByKey(tx *sqlx.Tx, metadata_key string, limit int) ([]Metadata, error) {
 	cols := `id, metadata_key, metadata_value, insert_time`
-	query := fmt.Sprintf(`SELECT %s FROM metadata WHERE metadata_key = $1 ORDER BY insert_time DESC LIMIT 1`, cols)
+	query := fmt.Sprintf(`SELECT %s FROM metadata WHERE metadata_key = $1 ORDER BY insert_time DESC LIMIT $2`, cols)
 	stmt, err := tx.Preparex(query)
 	if err != nil {
 		msg := "cannot prepare statement in getLatestMetadataByKey: " + err.Error()
 		return nil, errors.New(msg)
 	}
 	defer stmt.Close()
-	row := stmt.QueryRowx(metadata_key)
-	var m Metadata
-	err = row.StructScan(&m)
+	rows, err := stmt.Queryx(metadata_key, limit)
 	if err != nil {
-		switch err {
-		case sql.ErrNoRows:
-			return nil, nil
-		default:
-			msg := "cannot unmarshal metadata from getLatestMetadataByKey: " + err.Error()
-			return nil, errors.New(msg)
-		}
+		msg := "cannot query metadata from getLatestMetadataByKey: " + err.Error()
+		return nil, errors.New(msg)
 	}
-	return &m, nil
+	metadatas := []Metadata{}
+	for rows.Next() {
+		var m Metadata
+		err = rows.StructScan(&m)
+		if err != nil {
+			switch err {
+			case sql.ErrNoRows:
+				return nil, nil
+			default:
+				msg := "cannot unmarshal metadata from getLatestMetadataByKey: " + err.Error()
+				return nil, errors.New(msg)
+			}
+		}
+		metadatas = append(metadatas, m)
+	}
+	return metadatas, nil
 }
 
-func (database *Database) GetLatestMetadataByKeyBeforeTime(metadata_key string, timestamp int64) (*Metadata, error) {
+func (database *Database) GetLatestMetadataByKeyBeforeTime(metadata_key string, timestamp int64, limit int) ([]Metadata, error) {
 	tx, err := database.db.Beginx()
 	if err != nil {
 		msg := "cannot begin transaction for GetLatestMetadataByKeyBeforeTime: " + err.Error()
 		return nil, errors.New(msg)
 	}
-	m, err := database.getLatestMetadataByKeyBeforeTime(tx, metadata_key, timestamp)
+	m, err := database.getLatestMetadataByKeyBeforeTime(tx, metadata_key, timestamp, limit)
 	if err != nil {
 		msg := "cannot get metadata in GetLatestMetadataByKeyBeforeTime: " + err.Error()
 		roll_err := tx.Rollback()
@@ -176,28 +184,36 @@ func (database *Database) GetLatestMetadataByKeyBeforeTime(metadata_key string, 
 	return m, nil
 }
 
-func (database *Database) getLatestMetadataByKeyBeforeTime(tx *sqlx.Tx, metadata_key string, timestamp int64) (*Metadata, error) {
+func (database *Database) getLatestMetadataByKeyBeforeTime(tx *sqlx.Tx, metadata_key string, timestamp int64, limit int) ([]Metadata, error) {
 	cols := `id, metadata_key, metadata_value, insert_time`
-	query := fmt.Sprintf(`SELECT %s FROM metadata WHERE metadata_key = $1 AND insert_time <= $2 ORDER BY insert_time DESC LIMIT 1`, cols)
+	query := fmt.Sprintf(`SELECT %s FROM metadata WHERE metadata_key = $1 AND insert_time <= $2 ORDER BY insert_time DESC LIMIT $3`, cols)
 	stmt, err := tx.Preparex(query)
 	if err != nil {
 		msg := "cannot prepare statement in getLatestMetadataByKeyBeforeTime: " + err.Error()
 		return nil, errors.New(msg)
 	}
 	defer stmt.Close()
-	row := stmt.QueryRowx(metadata_key, timestamp)
-	var m Metadata
-	err = row.StructScan(&m)
+	rows, err := stmt.Queryx(metadata_key, timestamp, limit)
 	if err != nil {
-		switch err {
-		case sql.ErrNoRows:
-			return nil, nil
-		default:
-			msg := "cannot unmarshal metadata from getLatestMetadataByKeyBeforeTime: " + err.Error()
-			return nil, errors.New(msg)
-		}
+		msg := "cannot query metadata from getLatestMetadataByKeyBeforeTime: " + err.Error()
+		return nil, errors.New(msg)
 	}
-	return &m, nil
+	metadatas := []Metadata{}
+	for rows.Next() {
+		var m Metadata
+		err = rows.StructScan(&m)
+		if err != nil {
+			switch err {
+			case sql.ErrNoRows:
+				return nil, nil
+			default:
+				msg := "cannot unmarshal metadata from getLatestMetadataByKeyBeforeTime: " + err.Error()
+				return nil, errors.New(msg)
+			}
+		}
+		metadatas = append(metadatas, m)
+	}
+	return metadatas, nil
 }
 
 func (database *Database) GetDistinctMetadataValuesByKey(metadata_key string) ([]Metadata, error) {

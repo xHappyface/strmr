@@ -21,11 +21,24 @@
                 <br>
             {{ end }}
             <input id="title-text" type="text" size="50" {{ if .Channel }}value="{{ .Channel.Title }}"{{ end }}/>
+            {{ range .Titles }}
+                <pre>{{ . }}</pre>
+            {{ end }}
             <select id="choose-game">
                 {{ range $key, $value := .Games }}
                     <option value="{{ $value.ID }}"{{ if $value.Selected }}selected{{ end }}>{{ $key }}</option>
                 {{ end }}
             </select>
+            <br>
+            <input id="new-tag" type="text"/><button id="create-tag">Add Tag</button>
+            <div id="tags">
+            {{ range $tag := .Channel.Tags }}
+                <div class="tag" data-tag="{{ $tag }}">
+                    {{ $tag }}<button class="remove-tag">X</button>
+                </div>
+            {{ end }}
+            </div>
+            <br>
             <button id="change-stream">Update Stream</button>
             <br>
             <input type="text" id="search-categories"/>

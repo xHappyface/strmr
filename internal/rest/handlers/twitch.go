@@ -16,22 +16,22 @@ type GameElement struct {
 
 func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		access_token, err := h.database.GetLatestMetadataByKey("access_token")
+		access_token, err := h.database.GetLatestMetadataByKey("access_token", 1)
 		if err != nil {
 			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if access_token != nil {
-			h.twitch.Token = access_token.MetadataValue
+		if len(access_token) == 1 {
+			h.twitch.Token = access_token[0].MetadataValue
 			h.twitch.Client.SetUserAccessToken(h.twitch.Token)
 		}
-		refresh_token, err := h.database.GetLatestMetadataByKey("refresh_token")
+		refresh_token, err := h.database.GetLatestMetadataByKey("refresh_token", 1)
 		if err != nil {
 			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if refresh_token != nil {
-			h.twitch.RefreshToken = refresh_token.MetadataValue
+		if len(refresh_token) == 1 {
+			h.twitch.RefreshToken = refresh_token[0].MetadataValue
 		}
 		userAccessToken := h.twitch.Client.GetUserAccessToken()
 		authorized, _, err := h.twitch.Client.ValidateToken(userAccessToken)
@@ -79,17 +79,26 @@ func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 			user_login = k
 			user_id = users[k]
 		}
-		titles := []string{}
+		game_titles := []string{}
 		categories, err := h.database.GetDistinctMetadataValuesByKey("category")
 		if err != nil {
-			titles = []string{}
+			game_titles = []string{}
 		}
 		for k := range categories {
-			titles = append(titles, categories[k].MetadataValue)
+			game_titles = append(game_titles, categories[k].MetadataValue)
 		}
-		games, err := h.twitch.GetGames(titles)
+		games, err := h.twitch.GetGames(game_titles)
 		if err != nil {
 			games = map[string]string{}
+		}
+		title_hist, err := h.database.GetLatestMetadataByKey("title", 5)
+		if err != nil {
+			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		titles := []string{}
+		for i := range title_hist {
+			titles = append(titles, title_hist[i].MetadataValue)
 		}
 		channel := twitch.Channel{}
 		channels, _ := h.twitch.GetChannelInformation([]string{user_id})
@@ -116,6 +125,7 @@ func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 			Games      map[string]GameElement
 			Users      map[string]string
 			Channel    twitch.Channel
+			Titles     []string
 			Javascript []string
 			CSS        []string
 		}{
@@ -124,6 +134,7 @@ func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 			Games:      g,
 			Users:      users,
 			Channel:    channel,
+			Titles:     titles,
 			AuthURL:    url,
 			Javascript: []string{
 				"vendor/jquery/jquery-3.6.3.min",

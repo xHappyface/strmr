@@ -22,6 +22,16 @@ CREATE TABLE metadata (
     insert_time     INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER))
 );
 
+CREATE TABLE category (
+    id             INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')           PRIMARY KEY AUTOINCREMENT,
+    category_name  TEXT NOT NULL CHECK(TYPEOF(category_name) = 'text'),
+    related_id     TEXT NOT NULL CHECK(TYPEOF(related_id) = 'text')         DEFAULT('28'),
+    insert_time    INTEGER NOT NULL CHECK(TYPEOF(insert_time) = 'integer')  DEFAULT(CAST(strftime('%s', 'now') AS INTEGER)),
+    UNIQUE(category_name COLLATE NOCASE)
+);
+
+INSERT INTO category (category_name) VALUES("Garry's Mod");
+
 CREATE TABLE media_recording (
     id           INTEGER NOT NULL CHECK(TYPEOF(id) = 'integer')                                   PRIMARY KEY AUTOINCREMENT,
     file_name    TEXT NOT NULL CHECK(TYPEOF(file_name) = 'text'),

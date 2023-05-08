@@ -74,24 +74,23 @@ func New(svc *youtube.Service) *YouTube {
 	}
 }
 
-func (yt *YouTube) UploadVideo(file_name string, title string, description string, tags []string, recording_time string) (*string, error) {
+func (yt *YouTube) UploadVideo(file_name string, title string, description string, tags []string, recording_time string, category string) (*string, error) {
 	fmt.Println("starting video upload")
 	upload := &youtube.Video{
 		Snippet: &youtube.VideoSnippet{
 			Title:                title,
 			Description:          description,
-			CategoryId:           "22",
+			CategoryId:           category,
 			DefaultAudioLanguage: "en",
 			DefaultLanguage:      "en",
-			Tags: []string{
-				"test",
-				"vid",
-			},
+			Tags:                 tags,
 		},
 		Status: &youtube.VideoStatus{
 			PrivacyStatus:           "private",
-			MadeForKids:             false,
 			SelfDeclaredMadeForKids: false,
+			ForceSendFields: []string{
+				"SelfDeclaredMadeForKids",
+			},
 		},
 		RecordingDetails: &youtube.VideoRecordingDetails{
 			RecordingDate: recording_time,
@@ -132,4 +131,24 @@ func (yt *YouTube) InsertCaption(video_id string, file_name string) error {
 	}
 	fmt.Printf("Upload captions successful! ID: %v\n", response.Id)
 	return nil
+}
+
+type Category struct {
+	ID    string
+	Title string
+}
+
+func (yt *YouTube) GetCategories() ([]Category, error) {
+	resp, err := yt.service.VideoCategories.List([]string{"id"}).RegionCode("US").Do()
+	if err != nil {
+		return nil, errors.New("Cannot get youtube categories")
+	}
+	categories := []Category{}
+	for i := range resp.Items {
+		categories = append(categories, Category{
+			ID:    resp.Items[i].Id,
+			Title: resp.Items[i].Snippet.Title,
+		})
+	}
+	return categories, nil
 }

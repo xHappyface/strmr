@@ -27,7 +27,7 @@ func New(client *helix.Client) *Twitch {
 	}
 }
 
-func (t *Twitch) ChangeStream(username string, title string, category_id string) error {
+func (t *Twitch) ChangeStream(username string, title string, category_id string, tags []string) error {
 	authorized, _, err := t.Client.ValidateToken(t.Token)
 	if !authorized {
 		return errors.New("Not authorized to change stream title: " + err.Error())
@@ -38,11 +38,12 @@ func (t *Twitch) ChangeStream(username string, title string, category_id string)
 		return errors.New("Could not find twith user: " + err.Error())
 	}
 	_, err = t.Client.EditChannelInformation(&helix.EditChannelInformationParams{
-		BroadcasterID: broadcaster_id,
-		GameID:        category_id,
-		//BroadcasterLanguage: "en",
-		Title: title,
-		Delay: 0,
+		BroadcasterID:       broadcaster_id,
+		GameID:              category_id,
+		BroadcasterLanguage: "en",
+		Title:               title,
+		Tags:                tags,
+		Delay:               0,
 	})
 	if err != nil {
 		return errors.New("Error changing twitch stream title: " + err.Error())
@@ -117,6 +118,7 @@ type Channel struct {
 	Title        string
 	CategoryName string
 	CategoryID   string
+	Tags         []string
 }
 
 func (t *Twitch) GetChannelInformation(ids []string) (map[string]Channel, error) {
@@ -139,6 +141,7 @@ func (t *Twitch) GetChannelInformation(ids []string) (map[string]Channel, error)
 			Title:        channelsResp.Data.Channels[k].Title,
 			CategoryName: channelsResp.Data.Channels[k].GameName,
 			CategoryID:   channelsResp.Data.Channels[k].GameID,
+			Tags:         channelsResp.Data.Channels[k].Tags,
 		}
 		channels[channelsResp.Data.Channels[k].BroadcasterName] = channel
 	}
