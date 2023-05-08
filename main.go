@@ -4,10 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/andreykaipov/goobs"
 	"github.com/jnrprgmr/strmr/internal/rest/handlers"
@@ -64,7 +68,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer obsCli.Disconnect()
-	obs := obs.New(obsCli, "test", "background")
+	obs := obs.New(obsCli, "strmr-task-text", "strmr-task-background", "strmr-avatar")
 	sqlxConn, err := database.GetDB(c.Database.Name)
 	if err != nil {
 		log.Fatal(err)
@@ -127,5 +131,32 @@ func main() {
 	http.HandleFunc("/avatar_status", h.AvatarStatus)
 	http.HandleFunc("/avatar", h.Avatar)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	err = obs.RefreshSources()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	s := &http.Server{
+		Addr: "0.0.0.0:8080",
+	}
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+	log.Print("Server Started")
+
+	<-done
+	log.Print("Server Stopped")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() {
+		// extra handling here
+		cancel()
+	}()
+
+	if err := s.Shutdown(ctx); err != nil {
+		log.Fatalf("Server Shutdown Failed:%+v", err)
+	}
+	log.Print("Server Exited Properly")
 }

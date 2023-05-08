@@ -65,6 +65,7 @@ func (h *Handlers) YouTubeUploadHandler(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		tags := []string{}
+		hash_tags := []string{}
 		unique_tags := map[string]bool{}
 		for i := range yt_data.Tags {
 			real_tags := strings.Split(yt_data.Tags[i].Text, ",")
@@ -73,13 +74,14 @@ func (h *Handlers) YouTubeUploadHandler(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 		for tag := range unique_tags {
-			tags = append(tags, "#"+tag)
+			hash_tags = append(hash_tags, "#"+tag)
+			tags = append(tags, tag)
 		}
 		recording_time := time.Unix(media_record.StartTime, 0).UTC().Format(time.RFC3339Nano)
 		description = description + "Categories:\n" + strings.Join(categories, "\n") + "\n\n"
 		description = description + "Timestamps:\n" + youtube.CreateMetadataText(yt_data.Tasks, "Starting stream") + "\n"
 		description = description + CreateSocialText() + "\n"
-		description = description + strings.Join(tags, " ") + "\n"
+		description = description + strings.Join(hash_tags, " ") + "\n"
 		description = description + "Streamed: " + recording_time
 		subtitle_file := youtube.CreateSubtitleText(yt_data.Subtitles)
 		title := youtube.CreateTitleText(yt_data.Titles, "/")

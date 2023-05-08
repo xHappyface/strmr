@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -10,8 +9,8 @@ func (h *Handlers) TwitchAuthHandler(w http.ResponseWriter, r *http.Request) {
 	h.twitch.Code = code
 	resp, err := h.twitch.Client.RequestUserAccessToken(h.twitch.Code)
 	if err != nil {
-		// handle error
-		fmt.Println("test")
+		h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	// Set the access token on the client
 	h.twitch.Token = resp.Data.AccessToken

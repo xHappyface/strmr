@@ -24,6 +24,7 @@ type OBS struct {
 	Client               *goobs.Client
 	TaskSourceName       string
 	BackgroundSourceName string
+	AvatarSourceName     string
 }
 
 type Task struct {
@@ -53,11 +54,12 @@ const (
 	ProfileParameterOutputFileName string = "FilenameFormatting"
 )
 
-func New(client *goobs.Client, task_name, background_name string) *OBS {
+func New(client *goobs.Client, task_name, background_name, avatar_name string) *OBS {
 	return &OBS{
 		Client:               client,
 		TaskSourceName:       task_name,
 		BackgroundSourceName: background_name,
+		AvatarSourceName:     avatar_name,
 	}
 }
 
@@ -76,6 +78,80 @@ func (obs *OBS) ConvertIntToHex(c int64) (*string, error) {
 		return nil, errors.New("invalid color integer conversion")
 	}
 	return &h, nil
+}
+
+func (obs *OBS) RefreshSources() error {
+	task_exists := true
+	background_exists := true
+	avatar_exists := true
+	_, err := obs.GetInputSettings(obs.TaskSourceName)
+	if err != nil {
+		task_exists = false
+	}
+	_, err = obs.GetInputSettings(obs.BackgroundSourceName)
+	if err != nil {
+		background_exists = false
+	}
+	_, err = obs.GetInputSettings(obs.AvatarSourceName)
+	if err != nil {
+		avatar_exists = false
+	}
+	current_scene, err := obs.GetCurrentScene()
+	if err != nil {
+		return err
+	}
+	if task_exists {
+		item_id := obs.GetSceneItemId(current_scene, obs.TaskSourceName)
+		is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
+		if err != nil {
+			return err
+		}
+		if *is_visible {
+			err = obs.SetSceneSourceVisible(item_id, current_scene, false)
+			if err != nil {
+				return err
+			}
+			err = obs.SetSceneSourceVisible(item_id, current_scene, true)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	if background_exists {
+		item_id := obs.GetSceneItemId(current_scene, obs.BackgroundSourceName)
+		is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
+		if err != nil {
+			return err
+		}
+		if *is_visible {
+			err = obs.SetSceneSourceVisible(item_id, current_scene, false)
+			if err != nil {
+				return err
+			}
+			err = obs.SetSceneSourceVisible(item_id, current_scene, true)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	if avatar_exists {
+		item_id := obs.GetSceneItemId(current_scene, obs.AvatarSourceName)
+		is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
+		if err != nil {
+			return err
+		}
+		if *is_visible {
+			err = obs.SetSceneSourceVisible(item_id, current_scene, false)
+			if err != nil {
+				return err
+			}
+			err = obs.SetSceneSourceVisible(item_id, current_scene, true)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (obs *OBS) ConvertIntToColor(c int64) (*Color, error) {
@@ -270,6 +346,26 @@ func (obs *OBS) CreateSceneItem(name string) (*sceneitems.CreateSceneItemRespons
 		SceneName:        "Main",
 		SourceName:       name,
 	})
+}
+
+func (obs *OBS) SetSceneSourceVisible(item_id float64, name string, visible bool) error {
+	_, err := obs.Client.SceneItems.SetSceneItemEnabled(&sceneitems.SetSceneItemEnabledParams{
+		SceneItemEnabled: &visible,
+		SceneItemId:      item_id,
+		SceneName:        name,
+	})
+	return err
+}
+
+func (obs *OBS) GetSceneSourceVisible(item_id float64, name string) (*bool, error) {
+	settings, err := obs.Client.SceneItems.GetSceneItemEnabled(&sceneitems.GetSceneItemEnabledParams{
+		SceneItemId: item_id,
+		SceneName:   name,
+	})
+	if settings == nil {
+		return nil, err
+	}
+	return &settings.SceneItemEnabled, err
 }
 
 func (obs *OBS) SetSceneItemTransform(item_id float64, name string, posX, posY, width, height float64) (*sceneitems.SetSceneItemTransformResponse, error) {
