@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/andreykaipov/goobs"
 	"github.com/andreykaipov/goobs/api/requests/config"
@@ -12,6 +13,7 @@ import (
 	"github.com/andreykaipov/goobs/api/requests/sceneitems"
 	"github.com/andreykaipov/goobs/api/requests/scenes"
 	"github.com/andreykaipov/goobs/api/typedefs"
+	"github.com/jnrprgmr/strmr/pkg/database"
 )
 
 type Config struct {
@@ -63,7 +65,7 @@ func New(client *goobs.Client, task_name, background_name, avatar_name string) *
 	}
 }
 
-func convertColor(c Color) (int64, error) {
+func ConvertColor(c Color) (int64, error) {
 	r := c.R
 	g := c.G
 	b := c.B
@@ -80,7 +82,12 @@ func (obs *OBS) ConvertIntToHex(c int64) (*string, error) {
 	return &h, nil
 }
 
-func (obs *OBS) RefreshSources() error {
+func (obs *OBS) RefreshSources(background_config database.Metadata, task_text string, task_config database.Metadata) error {
+	/*
+		Reference
+		backgorund posx 0, posy 0
+		width 1600 height 50
+	*/
 	task_exists := true
 	background_exists := true
 	avatar_exists := true
@@ -100,57 +107,153 @@ func (obs *OBS) RefreshSources() error {
 	if err != nil {
 		return err
 	}
-	if task_exists {
-		item_id := obs.GetSceneItemId(current_scene, obs.TaskSourceName)
-		is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
+	if background_exists {
+		_, err = obs.RemoveSceneItem(obs.GetSceneItemId(current_scene, obs.BackgroundSourceName), current_scene)
 		if err != nil {
-			return err
-		}
-		if *is_visible {
-			err = obs.SetSceneSourceVisible(item_id, current_scene, false)
-			if err != nil {
-				return err
-			}
-			err = obs.SetSceneSourceVisible(item_id, current_scene, true)
-			if err != nil {
-				return err
-			}
+			return errors.New("Error Removing background scene item: " + err.Error())
 		}
 	}
-	if background_exists {
-		item_id := obs.GetSceneItemId(current_scene, obs.BackgroundSourceName)
-		is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
+	vals := strings.Split(background_config.MetadataValue, ",")
+	if len(vals) != 5 {
+		return errors.New("background metadata config values not as expected")
+	}
+	color, err := strconv.Atoi(vals[0])
+	if err != nil {
+		return errors.New("background metadata config color not as expected: " + err.Error())
+	}
+	width, err := strconv.ParseFloat(vals[1], 64)
+	if err != nil {
+		return errors.New("background metadata config width not as expected: " + err.Error())
+	}
+	height, err := strconv.ParseFloat(vals[2], 64)
+	if err != nil {
+		return errors.New("background metadata config height not as expected: " + err.Error())
+	}
+	posx, err := strconv.ParseFloat(vals[3], 64)
+	if err != nil {
+		return errors.New("background metadata config posx not as expected: " + err.Error())
+	}
+	posy, err := strconv.ParseFloat(vals[4], 64)
+	if err != nil {
+		return errors.New("background metadata config posy not as expected: " + err.Error())
+	}
+	background_settings := map[string]interface{}{
+		"color":  color,
+		"width":  width + 4,
+		"height": height + 4,
+	}
+	_, err = obs.CreateInput(SourceColorBlockType, current_scene, obs.BackgroundSourceName, true, background_settings)
+	if err != nil {
+		return errors.New(err.Error())
+	}
+	time.Sleep(1 * time.Second)
+	_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.BackgroundSourceName), current_scene, posx-2, posy-2, width+4, height+4)
+	if err != nil {
+		return errors.New(err.Error())
+	}
+	if task_exists {
+		_, err = obs.RemoveSceneItem(obs.GetSceneItemId(current_scene, obs.TaskSourceName), current_scene)
 		if err != nil {
-			return err
+			return errors.New("Error Removing task scene item: " + err.Error())
 		}
-		if *is_visible {
-			err = obs.SetSceneSourceVisible(item_id, current_scene, false)
-			if err != nil {
-				return err
-			}
-			err = obs.SetSceneSourceVisible(item_id, current_scene, true)
-			if err != nil {
-				return err
-			}
-		}
+	}
+	vals = strings.Split(task_config.MetadataValue, ",")
+	if len(vals) != 5 {
+		return errors.New("task metadata config values not as expected")
+	}
+	color, err = strconv.Atoi(vals[0])
+	if err != nil {
+		return errors.New("task metadata config color not as expected: " + err.Error())
+	}
+	width, err = strconv.ParseFloat(vals[1], 64)
+	if err != nil {
+		return errors.New("task metadata config width not as expected: " + err.Error())
+	}
+	height, err = strconv.ParseFloat(vals[2], 64)
+	if err != nil {
+		return errors.New("task metadata config height not as expected: " + err.Error())
+	}
+	posx, err = strconv.ParseFloat(vals[3], 64)
+	if err != nil {
+		return errors.New("task metadata config posx not as expected: " + err.Error())
+	}
+	posy, err = strconv.ParseFloat(vals[4], 64)
+	if err != nil {
+		return errors.New("task metadata config posy not as expected: " + err.Error())
+	}
+	task_settings := map[string]interface{}{
+		"text":   task_text,
+		"color1": color,
+		"color2": color,
+	}
+	_, err = obs.CreateInput(SourceTextType, current_scene, obs.TaskSourceName, true, task_settings)
+	if err != nil {
+		return errors.New(err.Error())
+	}
+	time.Sleep(1 * time.Second)
+	_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.TaskSourceName), current_scene, posx, posy, width, height)
+	if err != nil {
+		return errors.New(err.Error())
 	}
 	if avatar_exists {
-		item_id := obs.GetSceneItemId(current_scene, obs.AvatarSourceName)
-		is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
+		_, err = obs.RemoveSceneItem(obs.GetSceneItemId(current_scene, obs.AvatarSourceName), current_scene)
 		if err != nil {
-			return err
-		}
-		if *is_visible {
-			err = obs.SetSceneSourceVisible(item_id, current_scene, false)
-			if err != nil {
-				return err
-			}
-			err = obs.SetSceneSourceVisible(item_id, current_scene, true)
-			if err != nil {
-				return err
-			}
+			return errors.New("Error Removing task scene item: " + err.Error())
 		}
 	}
+	// if background_exists {
+	// 	item_id := obs.GetSceneItemId(current_scene, obs.BackgroundSourceName)
+	// 	is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if *is_visible {
+	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, false)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, true)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// }
+	// if task_exists {
+	// 	item_id := obs.GetSceneItemId(current_scene, obs.TaskSourceName)
+	// 	is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if *is_visible {
+	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, false)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, true)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// } else {
+	// 	fmt.Println("task text does not exist")
+	// }
+	// if avatar_exists {
+	// 	item_id := obs.GetSceneItemId(current_scene, obs.AvatarSourceName)
+	// 	is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if *is_visible {
+	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, false)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, true)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// }
 	return nil
 }
 
@@ -203,7 +306,7 @@ func (obs *OBS) SetTask(task Task) error {
 	if err != nil {
 		task_exists = false
 	}
-	color, err := convertColor(task.Color)
+	color, err := ConvertColor(task.Color)
 	if err != nil {
 		return errors.New("Error converting color: " + err.Error())
 	}
@@ -217,7 +320,7 @@ func (obs *OBS) SetTask(task Task) error {
 		return errors.New("Cannot get current scene in SetTask: " + err.Error())
 	}
 	if task.Background != nil {
-		background_color, err := convertColor(task.Background.Color)
+		background_color, err := ConvertColor(task.Background.Color)
 		if err != nil {
 			return errors.New("Error converting background color: " + err.Error())
 		}
@@ -281,6 +384,13 @@ func (obs *OBS) SetTask(task Task) error {
 		_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.TaskSourceName), current_scene, task.PosX, task.PosY, task.Width, task.Height)
 		if err != nil {
 			return errors.New(err.Error())
+		}
+	} else {
+		if task_exists {
+			_, err = obs.RemoveSceneItem(obs.GetSceneItemId(current_scene, obs.TaskSourceName), current_scene)
+			if err != nil {
+				return errors.New("Error Removing task scene item: " + err.Error())
+			}
 		}
 	}
 

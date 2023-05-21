@@ -141,7 +141,7 @@ type Category struct {
 func (yt *YouTube) GetCategories() ([]Category, error) {
 	resp, err := yt.service.VideoCategories.List([]string{"id"}).RegionCode("US").Do()
 	if err != nil {
-		return nil, errors.New("Cannot get youtube categories")
+		return nil, errors.New("Cannot get youtube categories: " + err.Error())
 	}
 	categories := []Category{}
 	for i := range resp.Items {

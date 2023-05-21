@@ -25,7 +25,7 @@ func (h *Handlers) AvatarStatus(w http.ResponseWriter, r *http.Request) {
 		}
 		json.Unmarshal(reqBody, &data)
 		talking = true
-		cmd := exec.Command("espeak", "-x", data.Text)
+		cmd := exec.Command("espeak", "-v", "en+m4", data.Text)
 		start := time.Now()
 		if err := cmd.Run(); err != nil {
 			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)

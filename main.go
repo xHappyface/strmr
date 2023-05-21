@@ -131,7 +131,19 @@ func main() {
 	http.HandleFunc("/avatar_status", h.AvatarStatus)
 	http.HandleFunc("/avatar", h.Avatar)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	err = obs.RefreshSources()
+	background_config_metadata, err := db.GetLatestMetadataByKey("task_background_config", 1)
+	if err != nil || len(background_config_metadata) != 1 {
+		log.Fatalf("Cannot get background config metadata:%+v", err)
+	}
+	task_config_metadata, err := db.GetLatestMetadataByKey("task_config", 1)
+	if err != nil || len(task_config_metadata) != 1 {
+		log.Fatalf("Cannot get task config metadata:%+v", err)
+	}
+	task_metadata, err := db.GetLatestMetadataByKey("task", 1)
+	if err != nil || len(task_metadata) != 1 {
+		log.Fatalf("Cannot get task metadata:%+v", err)
+	}
+	err = obs.RefreshSources(background_config_metadata[0], task_metadata[0].MetadataValue, task_config_metadata[0])
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -145,7 +157,7 @@ func main() {
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()
-	log.Print("Server Started")
+	fmt.Println("Server Started")
 
 	<-done
 	log.Print("Server Stopped")
@@ -158,5 +170,5 @@ func main() {
 	if err := s.Shutdown(ctx); err != nil {
 		log.Fatalf("Server Shutdown Failed:%+v", err)
 	}
-	log.Print("Server Exited Properly")
+	fmt.Println("Server Exited Properly")
 }
