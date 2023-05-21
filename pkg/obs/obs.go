@@ -53,6 +53,7 @@ type Background struct {
 const (
 	SourceTextType                 string = "text_ft2_source_v2"
 	SourceColorBlockType           string = "color_source_v3"
+	SourceBrowser                  string = "browser_source"
 	ProfileParameterOutputFileName string = "FilenameFormatting"
 )
 
@@ -83,11 +84,6 @@ func (obs *OBS) ConvertIntToHex(c int64) (*string, error) {
 }
 
 func (obs *OBS) RefreshSources(background_config database.Metadata, task_text string, task_config database.Metadata) error {
-	/*
-		Reference
-		backgorund posx 0, posy 0
-		width 1600 height 50
-	*/
 	task_exists := true
 	background_exists := true
 	avatar_exists := true
@@ -195,65 +191,34 @@ func (obs *OBS) RefreshSources(background_config database.Metadata, task_text st
 	if err != nil {
 		return errors.New(err.Error())
 	}
+	avatar_settings := map[string]interface{}{
+		"url":                 "http://localhost:8080/avatar",
+		"width":               400,
+		"height":              400,
+		"restart_when_active": true,
+	}
 	if avatar_exists {
 		_, err = obs.RemoveSceneItem(obs.GetSceneItemId(current_scene, obs.AvatarSourceName), current_scene)
 		if err != nil {
 			return errors.New("Error Removing task scene item: " + err.Error())
 		}
 	}
-	// if background_exists {
-	// 	item_id := obs.GetSceneItemId(current_scene, obs.BackgroundSourceName)
-	// 	is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	if *is_visible {
-	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, false)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, true)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// }
-	// if task_exists {
-	// 	item_id := obs.GetSceneItemId(current_scene, obs.TaskSourceName)
-	// 	is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	if *is_visible {
-	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, false)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, true)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// } else {
-	// 	fmt.Println("task text does not exist")
-	// }
-	// if avatar_exists {
-	// 	item_id := obs.GetSceneItemId(current_scene, obs.AvatarSourceName)
-	// 	is_visible, err := obs.GetSceneSourceVisible(item_id, current_scene)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	if *is_visible {
-	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, false)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		err = obs.SetSceneSourceVisible(item_id, current_scene, true)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// }
+	_, err = obs.CreateInput(SourceBrowser, current_scene, obs.AvatarSourceName, true, avatar_settings)
+	if err != nil {
+		return errors.New(err.Error())
+	}
+	time.Sleep(1 * time.Second)
+	_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.AvatarSourceName), current_scene, 1160, 475, 400, 400)
+	if err != nil {
+		return errors.New(err.Error())
+	}
+	err = obs.PressInputPropertiesButton(&inputs.PressInputPropertiesButtonParams{
+		InputName:    obs.AvatarSourceName,
+		PropertyName: "refreshnocache",
+	})
+	if err != nil {
+		return errors.New(err.Error())
+	}
 	return nil
 }
 
@@ -589,4 +554,9 @@ func (obs *OBS) SetProfileParameter(parameter string, value string) error {
 		return errors.New("Could not set profile parameter [" + parameter + "]: " + err.Error())
 	}
 	return nil
+}
+
+func (obs *OBS) PressInputPropertiesButton(params *inputs.PressInputPropertiesButtonParams) error {
+	_, err := obs.Client.Inputs.PressInputPropertiesButton(params)
+	return err
 }
