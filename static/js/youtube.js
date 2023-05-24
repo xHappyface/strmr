@@ -1,11 +1,13 @@
 $(() => {
     $("#videos").on("click", ".upload", function(){
         var id = $(this).parent().attr("id")
+        var playlist_id = $(this).siblings(".select-playlist").find(":selected").val()
         var saveData = $.ajax({
             type: 'POST',
             url: "/youtube_upload",
             data: JSON.stringify({
-                recording_id: parseInt(id) || -1
+                recording_id: parseInt(id) || -1,
+                playlist_id: playlist_id || ""
             }),
             contentType: "application/json; charset=utf-8",
             success: function(resultData) {},

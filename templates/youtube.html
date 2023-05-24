@@ -15,6 +15,7 @@
         <div id="categories">
             {{ $cats := .Categories }}
             {{ $yt_cats := .YouTubeCategories }}
+            {{ $yt_playlists := .YouTubePlaylists }}
             {{ range $cat := $cats }}
             <div id="{{ .ID }}">
                 <span class="category-name">{{ $cat.CategoryName }}</span>
@@ -35,6 +36,13 @@
                     <br>
                     {{ .Directory }}/{{ .FileName }}.{{ .Extension }}
                     <br>
+                    <select class="select-playlist">
+                        {{ range $playlist := $yt_playlists }}
+                            <option class="playlist-option" value="{{ $playlist.ID }}">
+                                {{ $playlist.Name }}
+                            </option>
+                        {{ end }}
+                    </select>
                     <button class="upload">Upload</button>
                 </div>
             {{ end }}

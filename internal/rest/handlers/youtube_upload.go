@@ -11,7 +11,8 @@ import (
 )
 
 type YouTubeUpload struct {
-	RecordingID int64 `json:"recording_id"`
+	RecordingID int64  `json:"recording_id"`
+	PlaylistID  string `json:"playlist_id"`
 }
 
 func CreateSocialText() string {
@@ -99,6 +100,13 @@ func (h *Handlers) YouTubeUploadHandler(w http.ResponseWriter, r *http.Request) 
 		}
 		if video_id != nil {
 			err = h.youtube.InsertCaption(*video_id, subtitle_file_name)
+			if err != nil {
+				h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		if data.PlaylistID != "" {
+			err = h.youtube.InsertPlaylist(*video_id, data.PlaylistID)
 			if err != nil {
 				h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
 				return

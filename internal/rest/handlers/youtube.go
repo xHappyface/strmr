@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"math"
 	"net/http"
 	"text/template"
@@ -145,6 +146,16 @@ func (h *Handlers) YouTubeHandler(w http.ResponseWriter, r *http.Request) {
 			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		yt_playlists, err := h.youtube.GetPlaylists()
+		if err != nil {
+			log.Fatalf("Cannot get playlists:%+v", err)
+		}
+		yt_playlists = append([]youtube.Playlist{
+			{
+				ID:   "",
+				Name: "None",
+			},
+		}, yt_playlists...)
 		data := map[int64]youtube.YouTubeData{}
 		for i := range media_recordings {
 			yt_data, err := h.convertToYouTubeMetadata(media_recordings[i])
@@ -161,6 +172,7 @@ func (h *Handlers) YouTubeHandler(w http.ResponseWriter, r *http.Request) {
 			CSS               []string
 			Recordings        []database.MediaRecording
 			YouTubeCategories []youtube.Category
+			YouTubePlaylists  []youtube.Playlist
 			Categories        []database.Category
 		}{
 			Title: "YouTube settings",
@@ -173,6 +185,7 @@ func (h *Handlers) YouTubeHandler(w http.ResponseWriter, r *http.Request) {
 			},
 			Recordings:        media_recordings,
 			YouTubeCategories: yt_cats,
+			YouTubePlaylists:  yt_playlists,
 			Categories:        cats,
 		})
 	}

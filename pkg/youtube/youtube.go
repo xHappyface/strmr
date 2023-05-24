@@ -14,6 +14,11 @@ type YouTube struct {
 	service *youtube.Service
 }
 
+type Playlist struct {
+	ID   string
+	Name string
+}
+
 type Metadata struct {
 	Text  string
 	Start int64
@@ -108,6 +113,44 @@ func (yt *YouTube) UploadVideo(file_name string, title string, description strin
 	}
 	fmt.Printf("Upload successful! Video ID: %v\n", response.Id)
 	return &response.Id, nil
+}
+
+func (yt *YouTube) GetPlaylists() ([]Playlist, error) {
+	call := yt.service.Playlists.List([]string{
+		"snippet",
+		"id",
+	})
+	resp, err := call.Mine(true).Do()
+	if err != nil {
+		return nil, errors.New("Cannot get youtube playlists: " + err.Error())
+	}
+	playlists := []Playlist{}
+	for i := range resp.Items {
+		playlists = append(playlists, Playlist{
+			ID:   resp.Items[i].Id,
+			Name: resp.Items[i].Snippet.Title,
+		})
+	}
+	return playlists, nil
+}
+
+func (yt *YouTube) InsertPlaylist(video_id string, playlist_id string) error {
+	fmt.Println("Adding to playlist")
+	playlist := &youtube.PlaylistItem{
+		Snippet: &youtube.PlaylistItemSnippet{
+			PlaylistId: playlist_id,
+			ResourceId: &youtube.ResourceId{
+				Kind:    "youtube#video",
+				VideoId: video_id,
+			},
+		},
+	}
+	response, err := yt.service.PlaylistItems.Insert([]string{"snippet"}, playlist).Do()
+	if err != nil {
+		return errors.New("Could not add video to playlist: " + err.Error())
+	}
+	fmt.Printf("added vide to playlist successful! ID: %v\n", response.Id)
+	return nil
 }
 
 func (yt *YouTube) InsertCaption(video_id string, file_name string) error {
