@@ -241,7 +241,7 @@ func (obs *OBS) RefreshSources(background_config database.Metadata, task_text st
 	}
 	time.Sleep(2 * time.Second)
 	// Overlay background
-	color, err = strconv.Atoi("4291297280")
+	color, err = strconv.Atoi("4271296285")
 	if err != nil {
 		return errors.New("overlay background metadata config color not as expected: " + err.Error())
 	}
@@ -300,7 +300,7 @@ func (obs *OBS) RefreshSources(background_config database.Metadata, task_text st
 		return errors.New("overlay text metadata config posy not as expected: " + err.Error())
 	}
 	overlay_text_settings := map[string]interface{}{
-		"text":   "test",
+		"text":   "Starting Stream",
 		"color1": color,
 		"color2": color,
 	}

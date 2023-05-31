@@ -17,8 +17,10 @@ obs: clean
 run: clean
 	source scripts/token.sh && go run main.go
 
-db:
+db-reset:
+	rm strmr.db
 	sqlite3 strmr.db < sql/schema.sql
+	sqlite3 strmr.db < sql/data.sql
 
 auth-yt:
 	source scripts/token.sh && go run scripts/quickstart.go
