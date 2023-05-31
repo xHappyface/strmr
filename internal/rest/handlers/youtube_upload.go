@@ -17,10 +17,11 @@ type YouTubeUpload struct {
 
 func CreateSocialText() string {
 	text := "Socials\n" +
-		"YouTube: https://www.youtube.com/@jnrprgmr\n" +
-		"Twitch: https://www.twitch.tv/jnrprgmr\n" +
+		"YouTube: https://youtube.com/@jnrprgmr\n" +
+		"Twitch: https://twitch.tv/jnrprgmr\n" +
 		"Github: https://github.com/jnrprgmr\n" +
-		"Reddit: https://www.reddit.com/user/jnrprgmr\n" +
+		"Discord: https://discord.gg/mHWp8AchaX\n" +
+		"Reddit: https://reddit.com/user/jnrprgmr\n" +
 		"Twitter: https://twitter.com/jnrprgmr\n" +
 		"Steam: https://steamcommunity.com/id/jnrprgmr\n"
 	return text

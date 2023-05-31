@@ -23,10 +23,13 @@ type Config struct {
 }
 
 type OBS struct {
-	Client               *goobs.Client
-	TaskSourceName       string
-	BackgroundSourceName string
-	AvatarSourceName     string
+	Client                      *goobs.Client
+	ScreenSourceName            string
+	TaskSourceName              string
+	BackgroundSourceName        string
+	AvatarSourceName            string
+	OverlayTextSourceName       string
+	OverlayBackgroundSourceName string
 }
 
 type Task struct {
@@ -51,18 +54,22 @@ type Background struct {
 }
 
 const (
+	SourceScreenType               string = "xshm_input"
 	SourceTextType                 string = "text_ft2_source_v2"
 	SourceColorBlockType           string = "color_source_v3"
 	SourceBrowser                  string = "browser_source"
 	ProfileParameterOutputFileName string = "FilenameFormatting"
 )
 
-func New(client *goobs.Client, task_name, background_name, avatar_name string) *OBS {
+func New(client *goobs.Client, screen_name, task_name, background_name, avatar_name, overlay_text_name, overlay_background_name string) *OBS {
 	return &OBS{
-		Client:               client,
-		TaskSourceName:       task_name,
-		BackgroundSourceName: background_name,
-		AvatarSourceName:     avatar_name,
+		Client:                      client,
+		ScreenSourceName:            screen_name,
+		TaskSourceName:              task_name,
+		BackgroundSourceName:        background_name,
+		AvatarSourceName:            avatar_name,
+		OverlayTextSourceName:       overlay_text_name,
+		OverlayBackgroundSourceName: overlay_background_name,
 	}
 }
 
@@ -84,12 +91,19 @@ func (obs *OBS) ConvertIntToHex(c int64) (*string, error) {
 }
 
 func (obs *OBS) RefreshSources(background_config database.Metadata, task_text string, task_config database.Metadata) error {
+	screen_exists := true
 	task_exists := true
 	background_exists := true
 	avatar_exists := true
-	_, err := obs.GetInputSettings(obs.TaskSourceName)
+	overlay_text_exists := true
+	overlay_background_exists := true
+	_, err := obs.GetInputSettings(obs.ScreenSourceName)
 	if err != nil {
 		task_exists = false
+	}
+	_, err = obs.GetInputSettings(obs.TaskSourceName)
+	if err != nil {
+		screen_exists = false
 	}
 	_, err = obs.GetInputSettings(obs.BackgroundSourceName)
 	if err != nil {
@@ -99,16 +113,31 @@ func (obs *OBS) RefreshSources(background_config database.Metadata, task_text st
 	if err != nil {
 		avatar_exists = false
 	}
+	_, err = obs.GetInputSettings(obs.OverlayTextSourceName)
+	if err != nil {
+		overlay_text_exists = false
+	}
+	_, err = obs.GetInputSettings(obs.OverlayBackgroundSourceName)
+	if err != nil {
+		overlay_background_exists = false
+	}
 	current_scene, err := obs.GetCurrentScene()
 	if err != nil {
 		return err
 	}
-	if background_exists {
-		_, err = obs.RemoveSceneItem(obs.GetSceneItemId(current_scene, obs.BackgroundSourceName), current_scene)
-		if err != nil {
-			return errors.New("Error Removing background scene item: " + err.Error())
-		}
+	// Screen
+	screen_settings := map[string]interface{}{
+		"advanced": false,
+		"screen":   1, // hard coded
 	}
+	if !screen_exists {
+		_, err = obs.CreateInput(SourceScreenType, current_scene, obs.ScreenSourceName, true, screen_settings)
+		if err != nil {
+			return errors.New(err.Error())
+		}
+		time.Sleep(2 * time.Second)
+	}
+	// Background
 	vals := strings.Split(background_config.MetadataValue, ",")
 	if len(vals) != 5 {
 		return errors.New("background metadata config values not as expected")
@@ -138,21 +167,19 @@ func (obs *OBS) RefreshSources(background_config database.Metadata, task_text st
 		"width":  width + 4,
 		"height": height + 4,
 	}
-	_, err = obs.CreateInput(SourceColorBlockType, current_scene, obs.BackgroundSourceName, true, background_settings)
-	if err != nil {
-		return errors.New(err.Error())
+	if !background_exists {
+		_, err = obs.CreateInput(SourceColorBlockType, current_scene, obs.BackgroundSourceName, true, background_settings)
+		if err != nil {
+			return errors.New(err.Error())
+		}
+		time.Sleep(2 * time.Second)
 	}
-	time.Sleep(1 * time.Second)
 	_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.BackgroundSourceName), current_scene, posx-2, posy-2, width+4, height+4)
 	if err != nil {
-		return errors.New(err.Error())
+		return errors.New("Background: " + err.Error())
 	}
-	if task_exists {
-		_, err = obs.RemoveSceneItem(obs.GetSceneItemId(current_scene, obs.TaskSourceName), current_scene)
-		if err != nil {
-			return errors.New("Error Removing task scene item: " + err.Error())
-		}
-	}
+	time.Sleep(2 * time.Second)
+	// Task
 	vals = strings.Split(task_config.MetadataValue, ",")
 	if len(vals) != 5 {
 		return errors.New("task metadata config values not as expected")
@@ -182,36 +209,113 @@ func (obs *OBS) RefreshSources(background_config database.Metadata, task_text st
 		"color1": color,
 		"color2": color,
 	}
-	_, err = obs.CreateInput(SourceTextType, current_scene, obs.TaskSourceName, true, task_settings)
-	if err != nil {
-		return errors.New(err.Error())
+	if !task_exists {
+		_, err = obs.CreateInput(SourceTextType, current_scene, obs.TaskSourceName, true, task_settings)
+		if err != nil {
+			return errors.New(err.Error())
+		}
+		time.Sleep(2 * time.Second)
 	}
-	time.Sleep(1 * time.Second)
 	_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.TaskSourceName), current_scene, posx, posy, width, height)
 	if err != nil {
-		return errors.New(err.Error())
+		return errors.New("Task " + err.Error())
 	}
+	time.Sleep(2 * time.Second)
+	// Avatar
 	avatar_settings := map[string]interface{}{
 		"url":                 "http://localhost:8080/avatar",
 		"width":               400,
 		"height":              400,
 		"restart_when_active": true,
 	}
-	if avatar_exists {
-		_, err = obs.RemoveSceneItem(obs.GetSceneItemId(current_scene, obs.AvatarSourceName), current_scene)
+	if !avatar_exists {
+		_, err = obs.CreateInput(SourceBrowser, current_scene, obs.AvatarSourceName, true, avatar_settings)
 		if err != nil {
-			return errors.New("Error Removing task scene item: " + err.Error())
+			return errors.New(err.Error())
 		}
+		time.Sleep(2 * time.Second)
 	}
-	_, err = obs.CreateInput(SourceBrowser, current_scene, obs.AvatarSourceName, true, avatar_settings)
-	if err != nil {
-		return errors.New(err.Error())
-	}
-	time.Sleep(1 * time.Second)
 	_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.AvatarSourceName), current_scene, 1160, 475, 400, 400)
 	if err != nil {
-		return errors.New(err.Error())
+		return errors.New("Avatar: " + err.Error())
 	}
+	time.Sleep(2 * time.Second)
+	// Overlay background
+	color, err = strconv.Atoi("4291297280")
+	if err != nil {
+		return errors.New("overlay background metadata config color not as expected: " + err.Error())
+	}
+	width, err = strconv.ParseFloat("1600", 64)
+	if err != nil {
+		return errors.New("overlay background metadata config width not as expected: " + err.Error())
+	}
+	height, err = strconv.ParseFloat("900", 64)
+	if err != nil {
+		return errors.New("overlay background metadata config height not as expected: " + err.Error())
+	}
+	posx, err = strconv.ParseFloat("0", 64)
+	if err != nil {
+		return errors.New("overlay background metadata config posx not as expected: " + err.Error())
+	}
+	posy, err = strconv.ParseFloat("0", 64)
+	if err != nil {
+		return errors.New("overlay background metadata config posy not as expected: " + err.Error())
+	}
+	overlay_background_settings := map[string]interface{}{
+		"color":  color,
+		"width":  width,
+		"height": height,
+	}
+	if !overlay_background_exists {
+		_, err = obs.CreateInput(SourceColorBlockType, current_scene, obs.OverlayBackgroundSourceName, true, overlay_background_settings)
+		if err != nil {
+			return errors.New(err.Error())
+		}
+		time.Sleep(2 * time.Second)
+	}
+	_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.OverlayBackgroundSourceName), current_scene, posx, posy, width, height)
+	if err != nil {
+		return errors.New("Overlay Background: " + err.Error())
+	}
+	time.Sleep(2 * time.Second)
+	// Overlay Text
+	color, err = strconv.Atoi("4291297280")
+	if err != nil {
+		return errors.New("overlay text metadata config color not as expected: " + err.Error())
+	}
+	width, err = strconv.ParseFloat("1600", 64)
+	if err != nil {
+		return errors.New("overlay text metadata config width not as expected: " + err.Error())
+	}
+	height, err = strconv.ParseFloat("150", 64)
+	if err != nil {
+		return errors.New("overlay text metadata config height not as expected: " + err.Error())
+	}
+	posx, err = strconv.ParseFloat("0", 64)
+	if err != nil {
+		return errors.New("overlay text metadata config posx not as expected: " + err.Error())
+	}
+	posy, err = strconv.ParseFloat("0", 64)
+	if err != nil {
+		return errors.New("overlay text metadata config posy not as expected: " + err.Error())
+	}
+	overlay_text_settings := map[string]interface{}{
+		"text":   "test",
+		"color1": color,
+		"color2": color,
+	}
+	if !overlay_text_exists {
+		_, err = obs.CreateInput(SourceTextType, current_scene, obs.OverlayTextSourceName, true, overlay_text_settings)
+		if err != nil {
+			return errors.New(err.Error())
+		}
+		time.Sleep(2 * time.Second)
+	}
+	_, err = obs.SetSceneItemTransform(obs.GetSceneItemId(current_scene, obs.OverlayTextSourceName), current_scene, posx, posy, width, height)
+	if err != nil {
+		return errors.New("Overlay Text: " + err.Error())
+	}
+	time.Sleep(2 * time.Second)
 	err = obs.PressInputPropertiesButton(&inputs.PressInputPropertiesButtonParams{
 		InputName:    obs.AvatarSourceName,
 		PropertyName: "refreshnocache",
@@ -558,5 +662,14 @@ func (obs *OBS) SetProfileParameter(parameter string, value string) error {
 
 func (obs *OBS) PressInputPropertiesButton(params *inputs.PressInputPropertiesButtonParams) error {
 	_, err := obs.Client.Inputs.PressInputPropertiesButton(params)
+	return err
+}
+
+func (obs *OBS) SetSceneItemEnabled(item_id float64, scene_name string, enabled bool) error {
+	_, err := obs.Client.SceneItems.SetSceneItemEnabled(&sceneitems.SetSceneItemEnabledParams{
+		SceneItemEnabled: &enabled,
+		SceneItemId:      item_id,
+		SceneName:        scene_name,
+	})
 	return err
 }

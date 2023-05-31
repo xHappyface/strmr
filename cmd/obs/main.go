@@ -68,7 +68,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer client.Disconnect()
-	obs := obs.New(client, "strmr-task-text", "strmr-task-background", "strmr-avatar")
+	obs := obs.New(client, "strmr-screen", "strmr-task-text", "strmr-task-background", "strmr-avatar", "strmr-overlay-text", "strmr-overlay-background")
 	obsCli := New(obs)
 	obsCli.Execute()
 }

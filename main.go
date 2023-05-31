@@ -68,7 +68,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer obsCli.Disconnect()
-	obs := obs.New(obsCli, "strmr-task-text", "strmr-task-background", "strmr-avatar")
+	obs := obs.New(obsCli, "strmr-screen", "strmr-task-text", "strmr-task-background", "strmr-avatar", "strmr-overlay-text", "strmr-overlay-background")
 	sqlxConn, err := database.GetDB(c.Database.Name)
 	if err != nil {
 		log.Fatal(err)
@@ -123,6 +123,7 @@ func main() {
 	http.HandleFunc("/obs/task", h.UpdateOBSTask)
 	http.HandleFunc("/obs/scene/create", h.CreateScene)
 	http.HandleFunc("/obs/stream", h.UpdateOBSStream)
+	http.HandleFunc("/obs/overlay", h.UpdateOBSOverlay)
 
 	http.HandleFunc("/youtube", h.YouTubeHandler)
 	http.HandleFunc("/youtube_upload", h.YouTubeUploadHandler)
