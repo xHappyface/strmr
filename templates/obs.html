@@ -69,6 +69,34 @@
         </div>
         <br>
         <div>
+            <span>Overlay</span>
+            <br>
+            <label for="overlay-text">Text: </label>
+            <input type="text" value="{{ .Overlay.Text }}" id="overlay-text" \>
+            <br>
+            <label for="overlay-text-width">Width:</label>
+            <input type="number" id="overlay-text-width" name="overlay-text-width" value="{{ .Overlay.TextWidth }}" min="0" \>
+            <label for="overlay-text-height">Height:</label>
+            <input type="number" id="overlay-text-height" name="overlay-text-height" value="{{ .Overlay.TextHeight }}" min="0" \>
+            <br>
+            <label for="overlay-text-posx">PosX:</label>
+            <input type="number" id="overlay-text-posx" name="overlay-text-posx" value="{{ .Overlay.TextPosX }}" min="0" \>
+            <label for="overlay-text-posy">PosY:</label>
+            <input type="number" id="overlay-text-posy" name="overlay-text-posy" value="{{ .Overlay.TextPosY }}" min="0" \>
+            <br>
+            <label for="overlay-text-color">Text Color: </label>
+            <input type="color" value="#{{ .Overlay.TextColor }}" id="overlay-text-color" \>
+            <br>
+            <label for="overlay-background-color">Background Color: </label>
+            <input type="color" value="#{{ .Overlay.BackgroundColor }}" id="overlay-background-color" \>
+            <br>
+            <input type="checkbox" id="overlay-enabled" {{ if .Overlay.Enabled }} checked {{ end }} name="overlay-enabled">
+            <label for="overlay-enabled">Enable Overlay</label>
+            <br>
+            <button id="overlay-submit">Submit Overlay</button>
+        </div>
+        <br>
+        <div>
             <label for="avatar-text">Speak something:</label>
             <br>
             <textarea id="avatar-text" name="avatar-text" rows="4" cols="50"></textarea>

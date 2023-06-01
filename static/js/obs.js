@@ -52,6 +52,31 @@ $(() => {
             data: JSON.stringify(payload)
         });
     });
+
+    $("#overlay-submit").on("click", function() {
+        var payload = {
+            text: $("#overlay-text").val() || "",
+            text_width: parseInt($("#overlay-text-width").val()) || 0,
+            text_height: parseInt($("#overlay-text-height").val()) || 0,
+            text_posx: parseInt($("#overlay-text-posx").val()) || 0,
+            text_posy: parseInt($("#overlay-text-posy").val()) || 0,
+            text_color: hexToRgb($("#overlay-text-color").val()) || {"r": 0, "g": 0, "b": 0, "a": 255},
+            background_color: hexToRgb($("#overlay-background-color").val()) || {"r": 0, "g": 0, "b": 0, "a": 255},
+            enabled: $("#overlay-enabled").is(":checked")
+        }
+        $.ajax({
+            type: 'POST',
+            url: "/obs/overlay",
+            data: JSON.stringify(payload)
+        });
+    });
+    $("#avatar-text").keypress(function(event) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            console.log("here")
+            $("#avatar-text-submit").click();
+        }
+    });
     $("#avatar-text-submit").on("click", function() {
         payload = {
             text: $("#avatar-text").val()
@@ -61,6 +86,7 @@ $(() => {
             url: "/avatar_status",
             data: JSON.stringify(payload)
         })
+        $("#avatar-text").val("")
     })
     $("#update-stream").on("click", function() {
         var streamEnabled = $("#stream-enabled").is(":checked")
