@@ -32,5 +32,11 @@ $(() => {
                 alert(request.responseText);
             }
         });
-    })
+    });
+    $("#videos").on("click", ".metadata", function() {
+        var id = $(this).parent().attr("id")
+        $('#exampleModal').modal('toggle')
+        $('.video-metadata').hide()
+        $('#metadata-' + id).show()
+    });
 });

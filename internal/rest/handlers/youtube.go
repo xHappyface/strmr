@@ -11,6 +11,11 @@ import (
 	"github.com/jnrprgmr/strmr/pkg/youtube"
 )
 
+type WrappedMediaRecording struct {
+	database.MediaRecording
+	Metadata youtube.YouTubeData
+}
+
 func ConvertRecordingSubtitlesToYouTubeSubtitles(recording database.MediaRecording, subtitles []database.Subtitle) ([]youtube.Subtitle, error) {
 	if recording.EndTime == nil {
 		return nil, errors.New("recording has not ended")
@@ -183,12 +188,18 @@ func (h *Handlers) YouTubeHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			data[media_recordings[i].ID] = *yt_data
 		}
+		wrapped_recordings := []WrappedMediaRecording{}
+		for i := range media_recordings {
+			media_recording := media_recordings[i]
+			wr := WrappedMediaRecording{media_recording, data[media_recording.ID]}
+			wrapped_recordings = append(wrapped_recordings, wr)
+		}
 		tmpl := template.Must(template.ParseFiles("./templates/youtube.html"))
 		tmpl.Execute(w, struct {
 			Title             string
 			Javascript        []string
 			CSS               []string
-			Recordings        []database.MediaRecording
+			Recordings        []WrappedMediaRecording
 			YouTubeCategories []youtube.Category
 			YouTubePlaylists  []youtube.Playlist
 			Categories        []database.Category
@@ -196,12 +207,15 @@ func (h *Handlers) YouTubeHandler(w http.ResponseWriter, r *http.Request) {
 			Title: "YouTube settings",
 			Javascript: []string{
 				"vendor/jquery/jquery-3.6.3.min",
+				"vendor/popper/popper-1.12.9.min",
+				"vendor/bootstrap/bootstrap-4.0.0.min",
 				"youtube",
 			},
 			CSS: []string{
+				"vendor/bootstrap/bootstrap-4.0.0.min",
 				"youtube",
 			},
-			Recordings:        media_recordings,
+			Recordings:        wrapped_recordings,
 			YouTubeCategories: yt_cats,
 			YouTubePlaylists:  yt_playlists,
 			Categories:        cats,

@@ -1,17 +1,18 @@
-<html>
+<!doctype html>
+<html lang="en">
     <head>
         <title>
             {{ .Title }}
         </title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         {{ range .Javascript }}
             <script src=static/js/{{ . }}.js></script> 
         {{ end }}
         {{ range .CSS }}
-            <link rel="stylesheet" href={{ . }}.css></script> 
+            <link rel="stylesheet" href=static/css/{{ . }}.css></script> 
         {{ end }}
     </head>
     <body>
-        Test
         <div id="categories">
             {{ $cats := .Categories }}
             {{ $yt_cats := .YouTubeCategories }}
@@ -34,6 +35,13 @@
             {{ range .Recordings }}
                 <div id="{{ .ID }}">
                     <br>
+                    {{ $titles := .Metadata.Titles }}
+                    {{ range $title := $titles }}
+                        {{ $title.Text }}
+                    {{ end }}
+                    {{ $tags := .Metadata.Tags }}
+                    ({{ range $tag := $tags }}{{ $tag.Text }}{{ end }})
+                    <br>
                     {{ .Directory }}/{{ .FileName }}.{{ .Extension }}
                     <br>
                     <select class="select-playlist">
@@ -43,9 +51,46 @@
                             </option>
                         {{ end }}
                     </select>
+                    <button class="metadata">Metadata</button>
                     <button class="upload">Upload</button>
                 </div>
             {{ end }}
         </div>
+          
+          <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">Metadata</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  {{ range .Recordings }}
+                    <div class="video-metadata" id="metadata-{{ .ID }}">
+                        <br>
+                        {{ $titles := .Metadata.Titles }}
+                        Title: {{ range $title := $titles }}{{ $title.Text }}{{ end }}
+                        <br>
+                        {{ $tags := .Metadata.Tags }}
+                        Tags: {{ range $tag := $tags }}{{ $tag.Text }}{{ end }}
+                        <br>
+                        File: {{ .Directory }}/{{ .FileName }}.{{ .Extension }}
+                        <br>
+                        {{ $categories := .Metadata.Categories }}
+                        Categories: {{ range $category := $categories }}{{ $category.Text }}{{ end }}
+                        <br>
+                        {{ $descriptions := .Metadata.Descriptions }}
+                        Description: {{ range $description := $descriptions }}{{ $description.Text }}{{ end }}
+                    </div>
+                  {{ end }}
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
     </body>
 <html>
