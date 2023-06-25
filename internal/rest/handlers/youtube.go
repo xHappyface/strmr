@@ -96,6 +96,23 @@ func (h *Handlers) convertToYouTubeMetadata(media_recordings database.MediaRecor
 	if err != nil {
 		return nil, err
 	}
+
+	descriptions, err := h.database.GetMetadataByKeyAndTimeRange("description", media_recordings.StartTime, *media_recordings.EndTime)
+	if err != nil {
+		return nil, err
+	}
+	initial_descriptions, err := h.database.GetLatestMetadataByKeyBeforeTime("description", media_recordings.StartTime, 1)
+	if err != nil {
+		return nil, err
+	}
+	if len(initial_descriptions) != 0 {
+		descriptions = append(descriptions, initial_descriptions...)
+	}
+	yt_descriptions, err := ConvertRecordingMetadataToYouTubeMetadata(media_recordings, descriptions)
+	if err != nil {
+		return nil, err
+	}
+
 	titles, err := h.database.GetMetadataByKeyAndTimeRange("title", media_recordings.StartTime, *media_recordings.EndTime)
 	if err != nil {
 		return nil, err
@@ -120,11 +137,12 @@ func (h *Handlers) convertToYouTubeMetadata(media_recordings database.MediaRecor
 		return nil, err
 	}
 	yt_data := &youtube.YouTubeData{
-		Categories: yt_categories,
-		Titles:     yt_titles,
-		Tasks:      yt_tasks,
-		Subtitles:  yt_subtitles,
-		Tags:       yt_tags,
+		Categories:   yt_categories,
+		Titles:       yt_titles,
+		Tasks:        yt_tasks,
+		Subtitles:    yt_subtitles,
+		Descriptions: yt_descriptions,
+		Tags:         yt_tags,
 	}
 	return yt_data, nil
 }

@@ -49,12 +49,13 @@ func CreateSubtitleText(subtitles []Subtitle) string {
 }
 
 type YouTubeData struct {
-	File       string
-	Categories []Metadata
-	Titles     []Metadata
-	Tags       []Metadata
-	Tasks      []Metadata
-	Subtitles  []Subtitle
+	File         string
+	Categories   []Metadata
+	Titles       []Metadata
+	Tags         []Metadata
+	Descriptions []Metadata
+	Tasks        []Metadata
+	Subtitles    []Subtitle
 }
 
 func CreateMetadataText(metadata []Metadata, initial string) string {

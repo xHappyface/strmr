@@ -22,7 +22,10 @@ func CreateSocialText() string {
 		"Github: https://github.com/jnrprgmr\n" +
 		"Discord: https://discord.gg/mHWp8AchaX\n" +
 		"Reddit: https://reddit.com/user/jnrprgmr\n" +
+		"Subreddit: https://www.reddit.com/r/jnrprgmr\n" +
 		"Twitter: https://twitter.com/jnrprgmr\n" +
+		"Tumblr: https://jnrprgmr.tumblr.com\n" +
+		"Trello: https://trello.com/w/jnr_prgmr\n" +
 		"Steam: https://steamcommunity.com/id/jnrprgmr\n"
 	return text
 }
@@ -79,8 +82,13 @@ func (h *Handlers) YouTubeUploadHandler(w http.ResponseWriter, r *http.Request) 
 			hash_tags = append(hash_tags, "#"+tag)
 			tags = append(tags, tag)
 		}
+		descriptions := []string{}
+		for i := range yt_data.Descriptions {
+			descriptions = append(descriptions, yt_data.Descriptions[i].Text)
+		}
 		recording_time := time.Unix(media_record.StartTime, 0).UTC().Format(time.RFC3339Nano)
 		description = description + "Categories:\n" + strings.Join(categories, "\n") + "\n\n"
+		description = description + strings.Join(descriptions, "\n") + "\n\n"
 		description = description + "Timestamps:\n" + youtube.CreateMetadataText(yt_data.Tasks, "Starting stream") + "\n"
 		description = description + CreateSocialText() + "\n"
 		description = description + strings.Join(hash_tags, " ") + "\n"
