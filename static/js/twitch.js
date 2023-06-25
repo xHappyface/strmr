@@ -12,6 +12,7 @@ $(() => {
                 title: $("#title-text").val(),
                 category_id: $("#choose-game").find(":selected").val(),
                 category_name: $("#choose-game").find(":selected").text(),
+                description: $("#description").val() || "",
                 tags: tags
             }),
             contentType: "application/json; charset=utf-8",

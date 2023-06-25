@@ -18,7 +18,7 @@ run: clean
 	source scripts/token.sh && go run main.go
 
 db-reset:
-	rm strmr.db
+	rm -f strmr.db
 	sqlite3 strmr.db < sql/schema.sql
 	sqlite3 strmr.db < sql/data.sql
 

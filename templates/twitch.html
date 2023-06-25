@@ -24,6 +24,10 @@
             {{ range .Titles }}
                 <pre>{{ . }}</pre>
             {{ end }}
+            <br>
+            <label for="description">Description:</label>
+            <input name="description" id="description" type="text" size="50" value="{{ .Description }}"/>
+            <br>
             <select id="choose-game">
                 {{ range $key, $value := .Games }}
                     <option value="{{ $value.ID }}"{{ if $value.Selected }}selected{{ end }}>{{ $key }}</option>

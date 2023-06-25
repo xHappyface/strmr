@@ -79,6 +79,15 @@ func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 			user_login = k
 			user_id = users[k]
 		}
+		description := ""
+		descriptions_hist, err := h.database.GetLatestMetadataByKey("description", 1)
+		if err != nil {
+			h.ErrorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if len(descriptions_hist) != 0 {
+			description = descriptions_hist[0].MetadataValue
+		}
 		game_titles := []string{}
 		categories, err := h.database.GetDistinctMetadataValuesByKey("category")
 		if err != nil {
@@ -119,23 +128,25 @@ func (h *Handlers) TwitchHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		tmpl := template.Must(template.ParseFiles("./templates/twitch.html"))
 		tmpl.Execute(w, struct {
-			Title      string
-			Authorized bool
-			AuthURL    string
-			Games      map[string]GameElement
-			Users      map[string]string
-			Channel    twitch.Channel
-			Titles     []string
-			Javascript []string
-			CSS        []string
+			Title       string
+			Authorized  bool
+			AuthURL     string
+			Description string
+			Games       map[string]GameElement
+			Users       map[string]string
+			Channel     twitch.Channel
+			Titles      []string
+			Javascript  []string
+			CSS         []string
 		}{
-			Title:      "Twitch stream settings",
-			Authorized: authorized,
-			Games:      g,
-			Users:      users,
-			Channel:    channel,
-			Titles:     titles,
-			AuthURL:    url,
+			Title:       "Twitch stream settings",
+			Authorized:  authorized,
+			Games:       g,
+			Users:       users,
+			Channel:     channel,
+			Description: description,
+			Titles:      titles,
+			AuthURL:     url,
 			Javascript: []string{
 				"vendor/jquery/jquery-3.6.3.min",
 				"twitch",
