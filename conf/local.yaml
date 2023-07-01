@@ -5,3 +5,7 @@ obs:
   host: "localhost"
   port: "4455"
   recording_dir: "/media/jnrprgmr/7C000E4D000E0EB8/Videos"
+
+brdcstr:
+  host: "http://localhost"
+  port: "8081"

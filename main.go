@@ -15,6 +15,7 @@ import (
 
 	"github.com/andreykaipov/goobs"
 	"github.com/jnrprgmr/strmr/internal/rest/handlers"
+	"github.com/jnrprgmr/strmr/pkg/brdcstr"
 	"github.com/jnrprgmr/strmr/pkg/database"
 	"github.com/jnrprgmr/strmr/pkg/obs"
 	"github.com/jnrprgmr/strmr/pkg/twitch"
@@ -31,6 +32,7 @@ import (
 type Config struct {
 	Database database.Config `yaml:"db"`
 	OBS      obs.Config      `yaml:"obs"`
+	Brdcstr  brdcstr.Config  `yaml:"brdcstr"`
 }
 
 func loadConfig() (*Config, error) {
@@ -83,6 +85,11 @@ func main() {
 	})
 	if err != nil {
 		panic("error making twitch client: " + err.Error())
+	}
+	brdcstr_client := brdcstr.New(c.Brdcstr.Host, c.Brdcstr.Port)
+	_, err = brdcstr_client.Alive()
+	if err != nil {
+		panic("error checking brdcstr alive: " + err.Error())
 	}
 	ctx := context.Background()
 	// Used this video to help setup google coud project and get client secrets https://www.youtube.com/watch?v=aFwZgth790Q
