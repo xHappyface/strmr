@@ -5,8 +5,8 @@ go 1.19
 require (
 	github.com/andreykaipov/goobs v0.12.0
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/mattn/go-sqlite3 v1.14.16
-	github.com/nicklaw5/helix/v2 v2.20.0
+	github.com/mattn/go-sqlite3 v1.14.17
+	github.com/nicklaw5/helix/v2 v2.22.2
 	github.com/spf13/cobra v1.6.1
 	golang.org/x/net v0.9.0
 	golang.org/x/oauth2 v0.7.0

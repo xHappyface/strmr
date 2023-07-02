@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -37,7 +36,7 @@ type Config struct {
 
 func loadConfig() (*Config, error) {
 	c := Config{}
-	yamlFile, err := ioutil.ReadFile("conf/local.yaml")
+	yamlFile, err := os.ReadFile("conf/local.yaml")
 	if err != nil {
 		return nil, errors.New("Failed to read config file: " + err.Error())
 	}
@@ -94,7 +93,7 @@ func main() {
 	ctx := context.Background()
 	// Used this video to help setup google coud project and get client secrets https://www.youtube.com/watch?v=aFwZgth790Q
 	// run auth.py to generate oauth token and allow youtube API
-	b, err := ioutil.ReadFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+	b, err := os.ReadFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
