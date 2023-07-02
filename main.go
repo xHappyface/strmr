@@ -38,11 +38,11 @@ func loadConfig() (*Config, error) {
 	c := Config{}
 	yamlFile, err := os.ReadFile("conf/local.yaml")
 	if err != nil {
-		return nil, errors.New("Failed to read config file: " + err.Error())
+		return nil, fmt.Errorf("Failed to read config file: %v", err)
 	}
 	err = yaml.Unmarshal(yamlFile, &c)
 	if err != nil {
-		return nil, errors.New("Failed to unmarshal config file: " + err.Error())
+		return nil, fmt.Errorf("Failed to unmarshal config file: %v", err)
 	}
 	return &c, nil
 }
@@ -50,7 +50,7 @@ func loadConfig() (*Config, error) {
 func tokenFromFile(file string) (*oauth2.Token, error) {
 	f, err := os.Open(file)
 	if err != nil {
-		return nil, errors.New("could not open OAUTH file, please run the scripts/auth.py to get the authorization json: " + err.Error())
+		return nil, fmt.Errorf("Could not open OAUTH file, please run the scripts/auth.py to get the authorization json: %v", err)
 	}
 	t := &oauth2.Token{}
 	err = json.NewDecoder(f).Decode(t)
@@ -83,12 +83,12 @@ func main() {
 		RedirectURI:  "http://localhost:8080/twitch/auth",
 	})
 	if err != nil {
-		panic("error making twitch client: " + err.Error())
+		log.Fatalf("Error making twitch client: %v", err)
 	}
 	brdcstr_client := brdcstr.New(c.Brdcstr.Host, c.Brdcstr.Port)
 	_, err = brdcstr_client.Alive()
 	if err != nil {
-		panic("error checking brdcstr alive: " + err.Error())
+		log.Fatalf("Error checking brdcstr alive: %v", err)
 	}
 	ctx := context.Background()
 	// Used this video to help setup google coud project and get client secrets https://www.youtube.com/watch?v=aFwZgth790Q
@@ -103,14 +103,16 @@ func main() {
 	}
 	f, err := os.Open(os.Getenv("GOOGLE_OAUTH_TOKENS"))
 	if err != nil {
-		panic(errors.New("could not open OAUTH file, please run the scripts/auth.py to get the authorization json: " + err.Error()))
+		log.Fatalf("Could not open OAUTH file, please run the scripts/auth.py to get the authorization json: %v", err)
 	}
 	t := &oauth2.Token{}
-	err = json.NewDecoder(f).Decode(t)
+	if err = json.NewDecoder(f).Decode(t); err != nil {
+		log.Fatal(err)
+	}
 	defer f.Close()
 	tok, err := t, err
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	client := config.Client(ctx, tok)
 	service, err := youtubeApi.New(client)
@@ -152,7 +154,7 @@ func main() {
 	}
 	err = obs.RefreshSources(background_config_metadata[0], task_metadata[0].MetadataValue, task_config_metadata[0])
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err)
 	}
 	s := &http.Server{
 		Addr: "0.0.0.0:8080",
@@ -160,8 +162,8 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Listen: %v\n", err)
 		}
 	}()
 	fmt.Println("Server Started")
