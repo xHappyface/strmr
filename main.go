@@ -40,8 +40,7 @@ func loadConfig() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read config file: %v", err)
 	}
-	err = yaml.Unmarshal(yamlFile, &c)
-	if err != nil {
+	if err = yaml.Unmarshal(yamlFile, &c); err != nil {
 		return nil, fmt.Errorf("Failed to unmarshal config file: %v", err)
 	}
 	return &c, nil
@@ -105,11 +104,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not open OAUTH file, please run the scripts/auth.py to get the authorization json: %v", err)
 	}
+	defer f.Close()
 	t := &oauth2.Token{}
 	if err = json.NewDecoder(f).Decode(t); err != nil {
 		log.Fatal(err)
 	}
-	defer f.Close()
 	tok, err := t, err
 	if err != nil {
 		log.Fatal(err)
@@ -162,7 +161,7 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		if err := s.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
+		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("Listen: %v\n", err)
 		}
 	}()
